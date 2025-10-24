@@ -1,0 +1,18 @@
+<!-- img/logo.svg -->
+<svg width="280" height="60" viewBox="0 0 280 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#2C7A2C"></stop>
+      <stop offset="1" stop-color="#5CD65C"></stop>
+    </linearGradient>
+  </defs>
+  <!-- Balón -->
+  <g transform="translate(18,30)">
+    <circle r="18" fill="#fdfdfd" stroke="#1D1D1D" stroke-width="2"></circle>
+    <polygon points="0,-7 6,-2 4,6 -4,6 -6,-2" fill="#1D1D1D"></polygon>
+    <path d="M0,-7 L10,-10 M0,-7 L-10,-10 M4,6 L10,12 M-4,6 L-10,12" stroke="#1D1D1D" stroke-width="2"></path>
+  </g>
+  <!-- Texto -->
+  <text x="50" y="24" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#B0DF50" font-weight="700">4ever</text>
+  <text x="50" y="48" font-family="Segoe UI, Arial, sans-serif" font-size="28" fill="url(#g)" font-weight="800" letter-spacing=".5">Football</text>
+</svg>

@@ -1,0 +1,329 @@
+/* =========================================================
+   4everFootball – index.css (HOME)
+   Header + buscador + avatar/dropdown + layout 3 columnas
+   Leftnav + Feed (cards) + Sidebar derecha (grupos)
+   ========================================================= */
+
+/* -------- Paleta / Base -------- */
+:root{
+  --ff-gray-dark: #171C16;
+  --ff-green:     #5CD65C;
+  --ff-green-l:   #5CD65C;
+  --ff-text:      #EDEDED;
+  --ff-soft:      #D6D6D6;
+}
+html, body{ background: var(--ff-gray-dark) !important; color: var(--ff-text); }
+.ff-bg{ min-height: 100dvh; }
+
+/* ===== Header sticky ===== */
+.ff-header{
+  background: rgba(24,24,24,.9);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  transition: box-shadow .2s ease, background .2s ease;
+}
+.ff-header-scrolled{ box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+
+/* Buscador del header */
+.ff-search{ width:100%; }
+.ff-search .input-group-text{
+  background:#2b2b2b; color:#cfd3d6; border:none;
+  border-top-left-radius:999px; border-bottom-left-radius:999px;
+}
+.ff-search .form-control{
+  background:#2b2b2b; color:#e6e6e6; border:none;
+  border-top-right-radius:999px; border-bottom-right-radius:999px;
+  min-width:0;
+}
+.ff-search .form-control::placeholder{ color:#9aa0a6; }
+.ff-search .form-control:focus{ box-shadow: 0 0 0 .2rem rgba(92,214,92,.25); }
+
+/* Dropdown de perfil */
+.ff-dropdown{
+  position:absolute; right:0; top:110%; min-width: 220px;
+  background: rgba(37,37,37,.98);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px; padding:.35rem; display:none; z-index: 1000;
+}
+.ff-dropdown.show{ display:block; }
+.ff-dropdown-item{
+  display:block; width:100%; padding:.55rem .75rem;
+  color:#e6e6e6; text-decoration:none; border-radius:8px;
+}
+.ff-dropdown-item:hover{ background: rgba(255,255,255,.08); }
+.ff-dropdown-item.logout{ color:#ff6b6b; }
+.ff-dropdown-item.logout:hover{ background: rgba(255,107,107,.15) !important; color:#fff; }
+
+/* Avatar del header (chip verde circular) */
+.ff-avatar-btn{
+  width: 40px; height: 40px; border-radius: 50%; padding: 0;
+  position: relative; overflow: hidden; border: 0; cursor: pointer; line-height: 0;
+  display: inline-flex; align-items: center; justify-content: center; /* centrado real */
+  background:
+    radial-gradient(140% 120% at 30% 20%, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 38%),
+    linear-gradient(135deg, var(--ff-green) 0%, #3FA33F 55%, var(--ff-green-l) 100%);
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.70),
+    0 6px 14px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.16);
+  transition: transform .08s ease, box-shadow .15s ease, filter .15s ease;
+}
+.ff-avatar-btn:hover{
+  box-shadow:
+    0 0 0 3px rgba(92,214,92,.80),
+    0 10px 22px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.22);
+  filter: saturate(1.06) brightness(1.03);
+  transform: translateY(-1px);
+}
+.ff-avatar-btn:focus-visible{
+  outline: 3px solid rgba(92,214,92,.6);
+  outline-offset: 2px;
+}
+.ff-avatar-img{
+  width: 80%;
+  height: 80%;
+  object-fit: contain;     /* no recorta, queda centrado */
+  display: block;
+}
+
+/* ===== Componentes reutilizables ===== */
+.ff-title{
+  color:#c7f7c7; font-weight:800; font-size:1.5rem; letter-spacing:.3px; margin:0;
+  outline: none !important; /* FIX: sin marco verde accidental */
+}
+.glass-card{
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.30), inset 0 0 0 1px rgba(255,255,255,0.05);
+  backdrop-filter: blur(6px);
+}
+.btn-login{
+  background-color: var(--ff-green); color:#fff; border:none; height:42px; font-weight:700;
+}
+.btn-login:hover{ background-color:#239223; }
+.btn-register{
+  background-color: var(--ff-green-l); color:#fff; border:none; height:44px; font-weight:800;
+}
+.btn-register:hover{ background:#4cc64c; color:#fff; }
+.ff-chip{ background:#222; color:#cbd5e1; padding:2px 8px; border-radius:999px; font-size:12px; }
+
+/* ===== Layout tipo Reddit (3 columnas) ===== */
+.ff-shell{
+  display: grid;
+  grid-template-columns: 260px minmax(0,1fr) 340px; /* IZQ | CENTRO | DER */
+  gap: 18px;
+  margin-top: 12px;
+}
+
+/* Leftnav */
+.ff-leftnav{
+  position: sticky; top: 72px; align-self: start; height: fit-content;
+}
+.ff-leftnav-menu{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.28);
+  padding: 8px; color: white;
+}
+.ff-leftnav-link{
+  display:flex; align-items:center; gap:.6rem;
+  padding:.55rem .6rem; color:#e6e6e6; text-decoration:none;
+  border-radius:10px; font-weight:500;
+}
+.ff-leftnav-link:hover{ background: rgba(255,255,255,.08); }
+
+/* Feed centro */
+.ff-feed{ min-width:0; }
+#cards{ display:flex; flex-direction:column; gap:1.25rem; }
+
+/* Card de post */
+.ff-post{
+  border-radius:14px; overflow:hidden;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 30px rgba(0,0,0,.28);
+}
+.ff-post-header{
+  padding:10px 14px; display:flex; align-items:center; justify-content:space-between;
+}
+.ff-post-meta{ display:flex; align-items:center; gap:10px; color:#e6e6e6; }
+.ff-avatar{ width:36px; height:36px; border-radius:50%; background:#1f2937; flex:0 0 auto; }
+.ff-post-sub{ color:#9aa0a6; font-size:12px; }
+
+/* Media 16:9 */
+.ff-post-media{ position:relative; width:100%; aspect-ratio:16/9; background:#0b1220; }
+.ff-post-media img, .ff-post-media video{ width:100%; height:100%; object-fit:cover; display:block; }
+.ff-post-media.ff-empty{ background: linear-gradient(135deg,#0b1220 0%, #151e36 100%); }
+.ff-post-media.ff-empty::after{
+  content:"Sin imagen/vídeo"; position:absolute; inset:0; display:flex;
+  align-items:center; justify-content:center; color:#9aa0a6; font-weight:600; letter-spacing:.2px;
+}
+
+/* Acciones */
+.ff-actions{ display:flex; gap:8px; padding:10px 14px 14px; }
+.ff-actions .btn{ border-radius:10px; }
+
+/* Sidebar derecha (grupos) */
+.ff-right{ position:sticky; top:72px; align-self:start; height:fit-content; }
+.ff-group-card{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px; background:rgba(255,255,255,.06);
+  box-shadow:0 8px 20px rgba(0,0,0,.28);
+}
+.ff-aside h2{ font-size:1rem; color:#e6e6e6; margin:0 0 .4rem; }
+.ff-group-item{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.55rem .6rem; border-radius:10px; }
+.ff-group-item:hover{ background:rgba(255,255,255,.06); }
+.ff-group-link{ display:flex; align-items:center; gap:.6rem; color:#e6e6e6; text-decoration:none; }
+.ff-avatar-sm{ width:36px; height:36px; border-radius:50%; background:#1f2937; display:inline-flex; align-items:center; justify-content:center; font-weight:700; color:#cbd5e1; }
+.ff-avatar-sm img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+
+.ff-follow-btn{ border-radius:999px; padding:.25rem .6rem; font-weight:600; }
+.ff-following{ background:#1f3a2a; color:#d1fae5; border:1px solid rgba(92,214,92,.35); }
+.ff-notfollowing{ background:transparent; color:#e6e6e6; border:1px solid rgba(255,255,255,.25); }
+
+/* ===== Accesibilidad / utilidades ===== */
+.btn-login:focus-visible,
+.btn-register:focus-visible,
+.ff-avatar-btn:focus-visible,
+.ff-leftnav-link:focus-visible,
+.ff-dropdown-item:focus-visible{
+  outline: 3px solid rgba(92,214,92,.6);
+  outline-offset: 2px;
+}
+.d-none{ display:none !important; }
+
+/* ===== Responsivo ===== */
+/* Oculta columna derecha en >=tablet chica */
+@media (max-width: 1200px){
+  .ff-shell{ grid-template-columns: 240px minmax(0,1fr); }
+  .ff-right{ display:none; }
+}
+/* Solo feed en tablet/phone */
+@media (max-width: 768px){
+  .ff-shell{ grid-template-columns: minmax(0,1fr); }
+  .ff-leftnav{ display:none; }
+}
+
+/* Saludo en blanco dentro del dropdown */
+.ff-dropdown .ff-user-greet{
+  color: #fff;
+  font-weight: 600;
+  cursor: default;
+}
+
+/* Normalizar los <button> dentro del dropdown (Bootstrap les pone fondo blanco) */
+.ff-dropdown button.ff-dropdown-item{
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  padding: .55rem .75rem;      /* igual que los <a> */
+  border-radius: 8px;
+  color: #e6e6e6;
+  cursor: pointer;
+}
+
+/* Estados del botón: sin fondo blanco nunca */
+.ff-dropdown button.ff-dropdown-item:focus,
+.ff-dropdown button.ff-dropdown-item:active{
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Hover general del item del menú */
+.ff-dropdown .ff-dropdown-item:hover{
+  background: rgba(255,255,255,.08);
+}
+
+/* Estilo de “Cerrar sesión” */
+.ff-dropdown .ff-dropdown-item.logout{
+  color: #ff6b6b;
+}
+.ff-dropdown .ff-dropdown-item.logout:hover{
+  background: rgba(255,107,107,.15) !important;
+  color: #fff;
+}
+
+/* link de sede dentro de cada card */
+.ff-group-link-mini{
+  color: #9ae69a;                 /* verde clarito */
+  text-decoration: none;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background .15s ease, color .15s ease, transform .06s ease;
+}
+.ff-group-link-mini:hover{
+  background: rgba(92,214,92,.14);
+  color: #ffffff;
+}
+.ff-group-link-mini:active{ transform: translateY(1px); }
+
+/* Avatar dentro de cada post: la imagen rellena el círculo */
+.ff-post .ff-avatar img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+/* (opcional) un pelín de borde para que resalte en el fondo oscuro */
+.ff-post .ff-avatar{
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+/* ====== Modal oscuro (crear categoría) ====== */
+.modal-backdrop.show { opacity: .55; }
+
+.modal-content{
+  background: #262e27;                 /* fondo oscuro */
+  color: #EDEDED;                       /* texto legible */
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+}
+
+.modal-header{ border-bottom-color: rgba(255,255,255,.08); }
+.modal-footer{ border-top-color:    rgba(255,255,255,.08); }
+.modal-title{ color:#fff; }
+
+/* Cierre visible sobre fondo oscuro */
+.modal-header .btn-close{ filter: invert(1); opacity:.8; }
+.modal-header .btn-close:hover{ opacity:1; }
+
+/* Formularios dentro del modal */
+.modal-content .form-label{ color:#EDEDED; }
+.modal-content .form-control{
+  background:#3e3e3e;
+  color:#fff;
+  border-color: rgba(255,255,255,.18);
+  height: 44px;
+}
+.modal-content .form-control::placeholder{ color:#9aa0a6; }
+.modal-content .form-control:focus{
+  border-color: var(--ff-green-l, #5CD65C);
+  box-shadow: 0 0 0 .2rem rgba(92,214,92,.25);
+}
+
+/* Botones del modal */
+.modal-content .btn-primary{
+  background-color: var(--ff-green-l, #5CD65C);
+  border: none;
+  font-weight: 700;
+}
+.modal-content .btn-primary:hover{ background-color:#4cc64c; }
+
+.modal-content .btn-secondary{
+  background:#495057;
+  color:#fff;
+  border:none;
+}
+.modal-content .btn-secondary:hover{ background:#5a6268; }

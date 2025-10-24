@@ -1,0 +1,587 @@
+/* =========================================================
+   4everFootball – styles.css
+   Paleta + base + header + dropdown + glass + feed + sidebar
+   + Register (2 columnas con foto tipo credencial CUADRADA)
+   + Avatar header (botón circular con tinte verde)
+   ========================================================= */
+
+/* -------- Paleta -------- */
+:root{
+  --ff-gray-dark: rgb(23, 28, 22);
+  --ff-green:     #5CD65C;
+  --ff-green-l:   #5CD65C;
+  --ff-text-light:#EDEDED;
+  --ff-text-soft: #D6D6D6;
+}
+/*<!--#2C2C2C 5CD65C -->*/
+/* -------- Fondo base -------- */
+html, body { background-color: var(--ff-gray-dark) !important; }
+.ff-bg{ min-height: 100dvh; }
+
+/* -------- Branding (registro/login) -------- */
+.brand-wrap{ max-width: 720px; margin-inline: auto; }
+.brand-logo{
+  width: clamp(220px, 36vw, 520px);
+  height: auto;
+  display: block;
+  margin-inline: auto;
+  margin-bottom: .5rem;
+}
+.brand-tagline{ margin-top: .5rem; color: var(--ff-text-soft); font-size: clamp(1rem, 1.5vw, 1.25rem); }
+.brand-tagline .em{ color: var(--ff-green-l); font-weight: 700; }
+
+/* -------- Tarjetas glass / formularios -------- */
+.auth-card{ width:100%; max-width: 460px; border-radius: 12px; }
+.card{ background-color: transparent !important; }
+
+@keyframes fadeIn{ 0%{opacity:0; transform:translateY(20px);} 100%{opacity:1; transform:translateY(0);} }
+.glass-card{
+  background: rgba(255,255,255,0.20) !important;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn .8s ease;
+}
+
+.ff-title{
+  color:#c7f7c7 !important;
+  font-weight: 800;
+  font-size: 1.7rem;
+  letter-spacing:.3px;
+}
+.glass-card .form-label{ color: var(--ff-text-light); }
+.glass-card, .glass-card p, .glass-card small{ color:#E6E6E6; }
+/* hints más visibles en tarjetas */
+.glass-card .form-text,
+.glass-card .hint,
+.glass-card .hint-inline{ color: rgba(255,255,255,.85) !important; }
+
+/* Inputs/Select/Textarea */
+input.form-control,
+select.form-select,
+textarea.form-control{
+  background-color: #3e3e3e;
+  color:#ffffff;
+  height: 44px;
+}
+textarea.form-control{ min-height: 120px; }
+select.form-select{ padding-top:.375rem; padding-bottom:.375rem; }
+input.form-control::placeholder{ color:#9aa0a6; }
+input.form-control:focus,
+select.form-select:focus,
+textarea.form-control:focus{
+  border-color: var(--ff-green-l) !important;
+  box-shadow: 0 0 0 .2rem rgba(92,214,92,.25);
+}
+
+/* Validación */
+.form-control.is-invalid,
+.form-select.is-invalid,
+textarea.form-control.is-invalid{
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 .2rem rgba(220,53,69,.20) !important;
+}
+.form-control.is-valid,
+.form-select.is-valid,
+textarea.form-control.is-valid{
+  border-color: var(--ff-green) !important;
+  box-shadow: 0 0 0 .2rem rgba(44,122,44,.22) !important;
+}
+
+/* Alertas dentro de tarjeta glass */
+.glass-card .alert{ border-radius: 10px; padding: .6rem .8rem; margin-bottom: .75rem; }
+.glass-card .alert-success{ background: rgba(22,163,74,.14); border: 1px solid rgba(22,163,74,.55); color: #d7ffe6; }
+.glass-card .alert-danger{  background: rgba(220,53,69,.15); border: 1px solid rgba(220,53,69,.55); color: #ffe6ea; }
+
+/* -------- Botones (texto blanco y centrado) -------- */
+.btn-login{
+  background-color: var(--ff-green);
+  color:#fff;
+  border:none;
+  height:42px;
+  font-weight:700;
+}
+.btn-login:hover{ background-color:#239223; }
+
+.btn-register,
+.btn-login-alt{
+  background-color: var(--ff-green-l);
+  color:#fff;                 /* letras blancas */
+  border:none;
+  height:44px;
+  font-weight:800;
+  display:flex; align-items:center; justify-content:center; /* centrado perfecto */
+}
+.btn-register:hover,
+.btn-login-alt:hover{ background-color:#4cc64c; color:#fff; }
+
+/* -------- Links / separadores -------- */
+.ff-link{ color: var(--ff-green-l); text-decoration:none; font-weight:600; }
+.ff-link:hover{ text-decoration: underline; }
+
+.ff-divider{ position: relative; text-align: center; color:#cfd3d6; }
+.ff-divider::before, .ff-divider::after{
+  content:""; position:absolute; top:50%; width:45%; height:1px; background: rgba(255,255,255,0.25);
+}
+.ff-divider::before{ left:0; } .ff-divider::after{ right:0; }
+.ff-divider span{ display:inline-block; padding:0 .5rem; }
+
+/* =========================================================
+   Header sticky + buscador + dropdown perfil
+   ========================================================= */
+.ff-header{
+  background: rgba(24,24,24,.9);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  transition: box-shadow .2s ease, background .2s ease;
+}
+.ff-header-scrolled{ box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+
+/* Buscador en header */
+.ff-search{ width:100%; }
+.ff-search .input-group-text{
+  background:#2b2b2b; color:#cfd3d6; border:none;
+  border-top-left-radius:999px; border-bottom-left-radius:999px;
+}
+.ff-search .form-control{
+  background:#2b2b2b; color:#e6e6e6; border:none;
+  border-top-right-radius:999px; border-bottom-right-radius:999px;
+  min-width:0;
+}
+.ff-search .form-control::placeholder{ color:#9aa0a6; }
+.ff-search .form-control:focus{ box-shadow: 0 0 0 .2rem rgba(92,214,92,.25); }
+
+/* Dropdown perfil */
+
+
+.ff-dropdown{
+  position:absolute; right:0; top:110%; min-width: 200px;
+  background: rgba(37,37,37,.98);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px; padding:.35rem; display:none; z-index: 1000;
+}
+.ff-dropdown.show{ display:block; }
+.ff-dropdown-item{
+  display:block; width:100%; padding:.55rem .75rem;
+  color:#e6e6e6; text-decoration:none; border-radius:8px;
+}
+.ff-dropdown-item:hover{ background: rgba(255,255,255,.08); }
+
+.ff-dropdown-item.logout {
+  color: #ff6b6b;          /* rojo */
+  background: none !important;
+  font-weight: 500;
+}
+
+.ff-dropdown-item.logout:hover {
+  background: rgba(255, 107, 107, 0.15) !important;
+  color: #fff;             /* texto blanco en hover */
+}
+
+/* =========================================================
+   Layout de Inicio (aside IZQUIERDA | feed DERECHA)
+   ========================================================= */
+.ff-layout{
+  display:grid;
+  grid-template-columns: 320px minmax(0,1fr);
+  gap: 18px;
+}
+@media (max-width: 680px){
+  .ff-layout{ display:block; }
+}
+
+/* Sidebar – Grupos */
+.ff-aside{ position:sticky; top:72px; height:fit-content; }
+.ff-group-card{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px; background:rgba(255,255,255,.06);
+  box-shadow:0 8px 20px rgba(0,0,0,.28);
+}
+.ff-aside h2{ font-size:1rem; color:#e6e6e6; margin:0 0 .4rem; }
+.ff-group-item{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.55rem .6rem; border-radius:10px; }
+.ff-group-item:hover{ background:rgba(255,255,255,.06); }
+.ff-group-link{ display:flex; align-items:center; gap:.6rem; color:#e6e6e6; text-decoration:none; }
+.ff-avatar-sm{ width:36px; height:36px; border-radius:50%; background:#1f2937; display:inline-flex; align-items:center; justify-content:center; font-weight:700; color:#cbd5e1; }
+.ff-avatar-sm img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+.ff-follow-btn{ border-radius:999px; padding:.25rem .6rem; font-weight:600; }
+.ff-following{ background:#1f3a2a; color:#d1fae5; border:1px solid rgba(92,214,92,.35); }
+.ff-notfollowing{ background:transparent; color:#e6e6e6; border:1px solid rgba(255,255,255,.25); }
+
+/* =========================================================
+   Feed / Post card
+   ========================================================= */
+.ff-post{
+  border-radius: 14px; overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 30px rgba(0,0,0,.28);
+}
+.ff-post-header{ padding: 10px 14px; display:flex; align-items:center; justify-content:space-between; }
+.ff-post-meta{ display:flex; align-items:center; gap:10px; color:#e6e6e6; }
+.ff-avatar{ width:36px;height:36px;border-radius:50%; background:#1f2937; flex:0 0 auto; }
+.ff-post-sub{ color:#9aa0a6; font-size:12px; }
+
+/* Media 16:9 con placeholder cuando no hay archivo */
+.ff-post-media{ position: relative; width: 100%; aspect-ratio: 16 / 9; background:#0b1220; }
+.ff-post-media img, .ff-post-media video{ display:block; width:100%; height:100%; object-fit:cover; }
+.ff-post-media.ff-empty{ background: linear-gradient(135deg,#0b1220 0%, #151e36 100%); }
+.ff-post-media.ff-empty::after{
+  content:"Sin imagen/vídeo"; position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  color:#9aa0a6; font-weight:600; letter-spacing:.2px;
+}
+
+/* Acciones */
+.ff-actions{ display:flex; gap:8px; padding: 10px 14px 14px; }
+.ff-actions .btn{ border-radius: 10px; }
+
+/* Chips */
+.ff-chip{ background:#222; color:#cbd5e1; padding:2px 8px; border-radius:999px; font-size:12px; }
+
+/* =========================================================
+   Accesibilidad / focus
+   ========================================================= */
+.btn-login:focus-visible,
+.btn-register:focus-visible,
+.ff-link:focus-visible,
+.ff-avatar-btn:focus-visible{
+  outline: 3px solid rgba(92,214,92,.6);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   Input-group (botones dentro del input)
+   ========================================================= */
+.input-group .btn.btn-outline-light { border-color: rgba(255,255,255,.25); }
+.input-group .btn:focus { box-shadow: none; }
+.icon { display:inline-block; vertical-align:middle; }
+
+/* =========================================================
+   Utilidades
+   ========================================================= */
+.d-none { display: none !important; }
+
+/* =========================================================
+   Responsive genérico
+   ========================================================= */
+@media (max-width: 768px){ .brand-wrap{ margin-bottom: .5rem; } }
+@media (max-width: 576px){ .container{ padding-left: 1rem; padding-right: 1rem; } }
+
+/* =========================================================
+   REGISTER – 2 columnas + foto credencial CUADRADA
+   ========================================================= */
+
+/* Tarjeta más ancha y un poco más larga en desktop */
+.auth-card--wide{ max-width: 980px !important; min-height: 720px; }
+@media (max-width: 840px){ .auth-card--wide{ min-height: unset; } }
+
+/* Grid: izquierda (flexible) + derecha (fija) */
+.reg-grid{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 360px;
+  gap: 1.2rem 1.6rem;
+  align-items: start;
+}
+@media (max-width: 992px){ .reg-grid{ grid-template-columns: minmax(0,1fr) 320px; } }
+@media (max-width: 840px){ .reg-grid{ grid-template-columns: 1fr; } }
+
+/* Columna izquierda: un campo por línea (orden correcto) */
+.reg-left{ display:grid; gap:.9rem; }
+.reg-row-single{ display:grid; grid-template-columns: 1fr; }
+
+/* Foto credencial – CUADRADA */
+.idbox{
+  background:#2b2b2b;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:1rem;
+  overflow:hidden;
+}
+.idbox .label{ font-size:.92rem; color:#cfd8dc; }
+.idbox .sub  { font-size:.82rem; color:rgba(255,255,255,.75); }
+
+.id-photo{
+  width:100%; max-width:280px; aspect-ratio:1/1;            /* cuadrada */
+  border-radius:.55rem; border:1px solid rgba(255,255,255,.18);
+  background:#1f1f1f; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  margin:.25rem auto .6rem;
+}
+.id-photo img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+#photoEmpty{ text-align:center; color:rgba(255,255,255,.75); }
+
+/* File input compacto */
+.idbox .form-control[type="file"]{ padding:.375rem .5rem; }
+
+/* Botonera: dos botones lado a lado (responsive) */
+.reg-actions{
+  grid-column: 1 / -1;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  align-items:center;
+  margin-top:.6rem;
+}
+.reg-actions .btn{ white-space: nowrap; height:44px; line-height:1; }
+@media (max-width:576px){ .reg-actions{ grid-template-columns: 1fr; } }
+
+/* Etiquetas un pelín más legibles */
+.form-label{ font-weight:600; font-size:.95rem; letter-spacing:.2px; }
+
+/* =========================================================
+   Avatar en header (botón circular con tinte verde)
+   ========================================================= */
+.ff-avatar-btn{
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  /* base oscura + tinte verde sutil */
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(92,214,92,.26) 0%, rgba(44,122,44,.18) 60%, rgba(44,122,44,.12) 100%),
+    #1f2937;
+  border: 1px solid rgba(92,214,92,.40);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 0;
+  transition: background .2s ease, box-shadow .2s ease, border-color .2s ease, transform .08s ease;
+}
+.ff-avatar-btn:hover{
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(92,214,92,.40) 0%, rgba(44,122,44,.28) 60%, rgba(44,122,44,.18) 100%),
+    #1f2937;
+  border-color: rgba(92,214,92,.65);
+  box-shadow: 0 0 0 4px rgba(92,214,92,.22), inset 0 0 0 1px rgba(255,255,255,.08);
+  transform: translateY(-1px);
+}
+.ff-avatar-btn:active{ transform: translateY(0); box-shadow: 0 0 0 3px rgba(92,214,92,.28) inset; }
+
+/* Imagen del avatar */
+.ff-avatar-img{ width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+/* Fallback si no carga la imagen: dibujito blanco sobre degradado verde */
+.ff-avatar-fallback{
+  background:
+    radial-gradient(circle at 50% 45%, #ffffff 18%, transparent 19%) 50% 40%/34% 34% no-repeat,
+    radial-gradient(circle at 50% 120%, #ffffff 64%, transparent 65%) 50% 85%/70% 50% no-repeat,
+    linear-gradient(135deg, #2C7A2C, #5CD65C);
+  border: 1px solid rgba(255,255,255,.30);
+}
+
+/* ---- FIX: layout de inicio (2 columnas SIEMPRE en desktop) ---- */
+.ff-layout{
+  display: grid !important;
+  grid-template-columns: 320px minmax(0,1fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+/* evita que el contenido de la derecha rompa el grid */
+.ff-layout > *{ min-width: 0; }
+
+/* el aside fijo a la izquierda y sin “estirarse” */
+.ff-aside{
+  position: sticky;
+  top: 72px;
+  height: fit-content;
+}
+
+/* solo apilar en pantallas pequeñas */
+@media (max-width: 680px){
+  .ff-layout{ display:block !important; }
+}
+
+.ff-avatar-btn{
+  width:36px; height:36px; border-radius:50%;
+  padding:0;
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(92,214,92,.26) 0%, rgba(44,122,44,.18) 60%, rgba(44,122,44,.12) 100%),
+    #1f2937;
+  border:1px solid rgba(92,214,92,.40);
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background .2s, box-shadow .2s, border-color .2s, transform .08s;
+}
+.ff-avatar-btn:hover{
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(92,214,92,.40) 0%, rgba(44,122,44,.28) 60%, rgba(44,122,44,.18) 100%),
+    #1f2937;
+  border-color:rgba(92,214,92,.65);
+  box-shadow:0 0 0 4px rgba(92,214,92,.22), inset 0 0 0 1px rgba(255,255,255,.08);
+  transform:translateY(-1px);
+}
+.ff-avatar-img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+
+/* =========================================================
+   HOME – Layout tipo Reddit (3 columnas)
+   ff-shell: [leftnav | feed | right]
+   ========================================================= */
+
+/* Grid principal */
+.ff-shell{
+  display: grid;
+  grid-template-columns: 260px minmax(0,1fr) 340px; /* IZQ | CENTRO | DER */
+  gap: 18px;
+}
+
+/* Columna izquierda (nav estrecha) */
+.ff-leftnav{
+  position: sticky;
+  top: 72px;              /* igual a altura del header */
+  align-self: start;
+  height: fit-content;
+}
+.ff-leftnav-menu{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.28);
+  padding: 8px;
+  color: white;
+}
+.ff-leftnav-link{
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .6rem;
+  color: #747474;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.ff-leftnav-link:hover{
+  background: rgba(255,255,255,.08);
+}
+
+/* Columna central (feed) */
+.ff-feed{
+  min-width: 0; /* evita desbordes de contenido ancho */
+}
+.ff-feed #cards{
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.ff-feed #cards .ff-post{
+  width: 100%;
+  max-width: none;
+}
+
+/* Columna derecha (grupos/comunidades) */
+.ff-right{
+  position: sticky;
+  top: 72px;
+  align-self: start;
+  height: fit-content;
+}
+
+/* Ajustes del buscador en header (si no los tienes ya) */
+#headerSearch{ display:flex; min-width:260px; }
+#headerSearch .form-control{ min-width:0; }
+
+/* ===== Breakpoints ===== */
+/* En pantallas medianas ocultamos la columna derecha (como Reddit) */
+@media (max-width: 1200px){
+  .ff-shell{
+    grid-template-columns: 240px minmax(0,1fr); /* IZQ | CENTRO */
+  }
+  .ff-right{ display: none; }
+}
+
+/* En tablet/phone sólo dejamos el feed central */
+@media (max-width: 768px){
+  .ff-shell{
+    grid-template-columns: minmax(0,1fr);
+  }
+  .ff-leftnav{ display: none; }
+}
+
+/* Opcional: afinar títulos y chips en el feed */
+.ff-title{ margin-bottom: .5rem; }
+.ff-chip{ background:#222; color:#cbd5e1; padding:2px 8px; border-radius:999px; font-size:12px; }
+
+/* =========================================================
+   Avatar del header – Verde vivo estilo "chip" (circular)
+   ========================================================= */
+
+/* Botón circular con degradado, anillo verde y sombra */
+.ff-avatar-btn{
+  width: 40px;                    /* un pelín más grande para que "resalte" */
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  border: 0;
+
+  /* Fondo: highlight sutil + degradado con la paleta */
+  background:
+    radial-gradient(140% 120% at 30% 20%, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 38%),
+    linear-gradient(135deg, var(--ff-green) 0%, #3FA33F 55%, var(--ff-green-l) 100%);
+
+  /* Anillo + sombra de elevación + brillo interior */
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.70),        /* anillo verde */
+    0 6px 14px rgba(0,0,0,.35),           /* drop shadow */
+    inset 0 1px 0 rgba(255,255,255,.16);  /* leve brillo */
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  cursor: pointer;
+
+  transition:
+    transform .08s ease,
+    box-shadow .15s ease,
+    filter .15s ease;
+}
+
+.ff-avatar-btn:hover{
+  box-shadow:
+    0 0 0 3px rgba(92,214,92,.80),
+    0 10px 22px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.22);
+  filter: saturate(1.06) brightness(1.03);
+  transform: translateY(-1px);
+}
+
+.ff-avatar-btn:active{
+  transform: translateY(0);
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.85),
+    0 6px 14px rgba(0,0,0,.45),
+    inset 0 0 0 999px rgba(0,0,0,.02);
+}
+
+/* La imagen PNG se centra y deja margen para que se vea el anillo verde */
+.ff-avatar-img{
+  width: 70%;
+  height: 70%;
+  object-fit: contain;      /* por si el PNG no es exactamente circular */
+  display: block;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.18)); /* micro realce */
+  opacity: .98;
+}
+
+/* Fallback si la imagen no carga: ícono blanco "avatar" dibujado sobre el mismo degradado */
+.ff-avatar-fallback{
+  background:
+    /* cabeza */
+    radial-gradient(circle at 50% 42%, #ffffff 18%, transparent 19%) 50% 40%/34% 34% no-repeat,
+    /* torso */
+    radial-gradient(circle at 50% 118%, #ffffff 64%, transparent 65%) 50% 85%/70% 50% no-repeat,
+    /* degradado verde base */
+    linear-gradient(135deg, var(--ff-green), var(--ff-green-l));
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.70),
+    0 6px 14px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.16);
+  border-radius: 50%;
+}
+
+

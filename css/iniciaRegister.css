@@ -1,0 +1,224 @@
+/* =========================================================
+   4everFootball – iniciaRegister.css
+   (Solo vistas de Registro e Inicio de sesión)
+   Paleta + fondo + branding + tarjeta glass + formularios
+   + validación + alerts + botones + links
+   + REGISTER: grid 2 columnas y foto credencial cuadrada
+   ========================================================= */
+
+/* -------- Paleta / Fondo -------- */
+:root{
+  --ff-gray-dark: rgb(23, 28, 22);
+  --ff-green:     #5CD65C;
+  --ff-green-l:   #5CD65C;
+  --ff-text-light:#EDEDED;
+  --ff-text-soft: #D6D6D6;
+}
+html, body { background-color: var(--ff-gray-dark) !important; }
+.ff-bg{ min-height: 100dvh; }
+
+/* -------- Branding (registro/login) -------- */
+.brand-wrap{ max-width: 720px; margin-inline: auto; }
+.brand-logo{
+  width: clamp(220px, 36vw, 520px);
+  height: auto;
+  display: block;
+  margin-inline: auto;
+  margin-bottom: .5rem;
+}
+.brand-tagline{ margin-top: .5rem; color: var(--ff-text-soft); font-size: clamp(1rem, 1.5vw, 1.25rem); }
+.brand-tagline .em{ color: var(--ff-green-l); font-weight: 700; }
+
+/* -------- Tarjeta glass / título -------- */
+.auth-card{ width:100%; max-width: 460px; border-radius: 12px; }
+.card{ background-color: transparent !important; }
+
+@keyframes fadeIn{ 0%{opacity:0; transform:translateY(20px);} 100%{opacity:1; transform:translateY(0);} }
+.glass-card{
+  background: rgba(255,255,255,0.20) !important;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn .8s ease;
+}
+.ff-title{
+  color:#c7f7c7 !important;
+  font-weight: 800;
+  font-size: 1.7rem;
+  letter-spacing:.3px;
+}
+.glass-card .form-label{ color: var(--ff-text-light); }
+.glass-card, .glass-card p, .glass-card small{ color:#E6E6E6; }
+/* hints más visibles en tarjetas */
+.glass-card .form-text,
+.glass-card .hint,
+.glass-card .hint-inline{ color: rgba(255,255,255,.85) !important; }
+
+/* -------- Formularios (inputs/select/textarea) -------- */
+input.form-control,
+select.form-select,
+textarea.form-control{
+  background-color: #3e3e3e;
+  color:#ffffff;
+  height: 44px;
+}
+textarea.form-control{ min-height: 120px; }
+select.form-select{ padding-top:.375rem; padding-bottom:.375rem; }
+input.form-control::placeholder{ color:#9aa0a6; }
+input.form-control:focus,
+select.form-select:focus,
+textarea.form-control:focus{
+  border-color: var(--ff-green-l) !important;
+  box-shadow: 0 0 0 .2rem rgba(92,214,92,.25);
+}
+
+/* -------- Validación -------- */
+.form-control.is-invalid,
+.form-select.is-invalid,
+textarea.form-control.is-invalid{
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 .2rem rgba(220,53,69,.20) !important;
+}
+.form-control.is-valid,
+.form-select.is-valid,
+textarea.form-control.is-valid{
+  border-color: var(--ff-green) !important;
+  box-shadow: 0 0 0 .2rem rgba(44,122,44,.22) !important;
+}
+
+/* -------- Alertas dentro de glass -------- */
+.glass-card .alert{ border-radius: 10px; padding: .6rem .8rem; margin-bottom: .75rem; }
+.glass-card .alert-success{ background: rgba(22,163,74,.14); border: 1px solid rgba(22,163,74,.55); color: #d7ffe6; }
+.glass-card .alert-danger{  background: rgba(220,53,69,.15); border: 1px solid rgba(220,53,69,.55); color: #ffe6ea; }
+
+/* -------- Botones -------- */
+.btn-login{
+  background-color: var(--ff-green);
+  color:#fff;
+  border:none;
+  height:42px;
+  font-weight:700;
+}
+.btn-login:hover{ background-color:#239223; }
+
+.btn-register,
+.btn-login-alt{
+  background-color: var(--ff-green-l);
+  color:#fff;
+  border:none;
+  height:44px;
+  font-weight:800;
+  display:flex; align-items:center; justify-content:center;
+}
+.btn-register:hover,
+.btn-login-alt:hover{ background-color:#4cc64c; color:#fff; }
+
+/* -------- Links / separadores -------- */
+.ff-link{ color: var(--ff-green-l); text-decoration:none; font-weight:600; }
+.ff-link:hover{ text-decoration: underline; }
+
+.ff-divider{ position: relative; text-align: center; color:#cfd3d6; }
+.ff-divider::before, .ff-divider::after{
+  content:""; position:absolute; top:50%; width:45%; height:1px; background: rgba(255,255,255,0.25);
+}
+.ff-divider::before{ left:0; } .ff-divider::after{ right:0; }
+.ff-divider span{ display:inline-block; padding:0 .5rem; }
+
+/* -------- Accesibilidad / focus -------- */
+.btn-login:focus-visible,
+.btn-register:focus-visible,
+.ff-link:focus-visible{
+  outline: 3px solid rgba(92,214,92,.6);
+  outline-offset: 2px;
+}
+
+/* -------- Input-group (botón ojo dentro del input) -------- */
+.input-group .btn.btn-outline-light { border-color: rgba(255,255,255,.25); }
+.input-group .btn:focus { box-shadow: none; }
+.icon { display:inline-block; vertical-align:middle; }
+
+/* -------- Utilidad simple -------- */
+.d-none { display: none !important; }
+
+/* -------- Responsive genérico mínimo -------- */
+@media (max-width: 768px){ .brand-wrap{ margin-bottom: .5rem; } }
+@media (max-width: 576px){ .container{ padding-left: 1rem; padding-right: 1rem; } }
+
+/* =========================================================
+   REGISTER – Grid 2 columnas + foto tipo credencial (cuadrada)
+   ========================================================= */
+
+/* Tarjeta más ancha en desktop */
+.auth-card--wide{ max-width: 980px !important; min-height: 720px; }
+@media (max-width: 840px){ .auth-card--wide{ min-height: unset; } }
+
+/* Grid: izquierda (flex) + derecha (fija) */
+.reg-grid{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 360px;
+  gap: 1.2rem 1.6rem;
+  align-items: start;
+}
+@media (max-width: 992px){ .reg-grid{ grid-template-columns: minmax(0,1fr) 320px; } }
+@media (max-width: 840px){ .reg-grid{ grid-template-columns: 1fr; } }
+
+/* Columna izquierda */
+.reg-left{ display:grid; gap:.9rem; }
+.reg-row-single{ display:grid; grid-template-columns: 1fr; }
+
+/* (Si usas dos campos lado a lado en register) */
+.reg-row-dual{ display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.9rem 1rem; }
+@media (max-width: 576px){ .reg-row-dual{ grid-template-columns: 1fr; } }
+
+/* Foto credencial – CUADRADA */
+.idbox{
+  background:#2b2b2b;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:1rem;
+  overflow:hidden;
+}
+.idbox .label{ font-size:.92rem; color:#cfd8dc; }
+.idbox .sub  { font-size:.82rem; color:rgba(255,255,255,.75); }
+
+.id-photo{
+  width:100%; max-width:280px; aspect-ratio:1/1;
+  border-radius:.55rem; border:1px solid rgba(255,255,255,.18);
+  background:#1f1f1f; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  margin:.25rem auto .6rem;
+}
+.id-photo img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+#photoEmpty{ text-align:center; color:rgba(255,255,255,.75); }
+
+/* File input compacto */
+.idbox .form-control[type="file"]{ padding:.375rem .5rem; }
+
+/* Botonera: dos botones lado a lado (responsive) */
+.reg-actions{
+  grid-column: 1 / -1;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  align-items:center;
+  margin-top:.6rem;
+}
+.reg-actions .btn{ white-space: nowrap; height:44px; line-height:1; }
+@media (max-width:576px){ .reg-actions{ grid-template-columns: 1fr; } }
+
+/* Etiquetas un pelín más legibles */
+.form-label{ font-weight:600; font-size:.95rem; letter-spacing:.2px; }
+
+/* Fix: forzar texto blanco en el botón "Iniciar sesión" */
+.btn.btn-login-alt,
+.btn.btn-login-alt:visited { 
+  color: #fff !important;
+}
+
+.btn.btn-login-alt:hover,
+.btn.btn-login-alt:focus,
+.btn.btn-login-alt:active {
+  color: #fff !important;
+}

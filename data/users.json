@@ -1,0 +1,32 @@
+[
+    {
+        "id": "u_68d1be9eebc0c444811645",
+        "first_name": "Jairo",
+        "last_name_p": "morales",
+        "last_name_m": "morales",
+        "birth_date": "2009-12-27",
+        "gender": "M",
+        "birth_country": "Bélgica",
+        "nationality": "Mexicana",
+        "email": "jairo@outlook.com",
+        "avatar": "\/4everFootball\/data\/uploads\/u_68d1be9eebc0c444811645.jpg",
+        "password_hash": "$2y$10$UDVAjNhU6TOSy6Uvc1k84utZRljk9CvbbYJ.wQQ5E4RV62QjfmJ7W",
+        "isAdmin": false,
+        "created_at": "2025-09-22T23:24:47+02:00"
+    },
+    {
+        "id": "u_68d1bffc2dfae634226597",
+        "first_name": "Jose",
+        "last_name_p": "Hernandez",
+        "last_name_m": "Ruiz",
+        "birth_date": "2008-01-28",
+        "gender": "M",
+        "birth_country": "México",
+        "nationality": "Mexicana",
+        "email": "juan@4everAdmin.com",
+        "avatar": "\/4everFootball\/data\/uploads\/u_68d1bffc2dfae634226597.jpg",
+        "password_hash": "$2y$10$J5BmTQbwx5AFg8T3M7XYMu9A7N9Ca.Pble.QfZZ\/bLcg9tLB0pRFK",
+        "isAdmin": true,
+        "created_at": "2025-09-22T23:30:36+02:00"
+    }
+]

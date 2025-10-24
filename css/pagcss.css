@@ -1,0 +1,252 @@
+:root {
+  --ff-gray-dark: rgb(23, 28, 22);
+  --ff-green:     #5CD65C;
+  --ff-green-l:   #5CD65C;
+  --ff-text-light:#EDEDED;
+  --ff-text-soft: #D6D6D6;
+}
+
+body {
+  background: var(--ff-gray-dark); /* rgb(23,28,22) */
+  color: var(--ff-text-light);
+}
+
+/* Verde limón para botones principales */
+.btn-register,
+#profileBtn {
+  background-color: #5CD65C !important; /* verde limón */
+  color: #ffffff !important;            /* texto blanco */
+  border: none !important;
+}
+
+/* Hover más oscuro para dar feedback */
+.btn-register:hover,
+#profileBtn:hover {
+  background-color: #4CC64C !important; 
+  color: #ffffff !important;
+}
+
+
+
+/* Buscador en header */
+.ff-search{ width:100%; }
+.ff-search .input-group-text{
+  background:#2b2b2b; color:#cfd3d6; border:none;
+  border-top-left-radius:999px; border-bottom-left-radius:999px;
+}
+.ff-search .form-control{
+  background:#2b2b2b; color:#e6e6e6; border:none;
+  border-top-right-radius:999px; border-bottom-right-radius:999px;
+  min-width:0;
+}
+.ff-search .form-control::placeholder{ color:#9aa0a6; }
+.ff-search .form-control:focus{ box-shadow: 0 0 0 .2rem rgba(92,214,92,.25); }
+
+/* Fondo glass-card */
+.glass-card {
+  background: rgba(37,37,37,.9);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+
+/* Título */
+.glass-card h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ff-text-light);
+}
+
+/* Textos secundarios */
+.text-secondary, .form-text {
+  color: var(--ff-text-soft) !important;
+}
+
+/* Labels */
+.form-label {
+  color: var(--ff-text-light);
+  font-weight: 500;
+}
+
+/* Inputs */
+.form-control,
+.form-select {
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,.15);
+  color: var(--ff-text-light);
+  border-radius: 10px;
+  padding: .55rem .75rem;
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--ff-green);
+  box-shadow: 0 0 0 2px rgba(92,214,92,.25);
+  background: #1f1f1f;
+  color: var(--ff-text-light);
+}
+
+/* Invalid feedback */
+.invalid-feedback {
+  color: #ff6b6b; /* rojo claro para error */
+}
+
+/* Previsualización logo */
+.logo-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px dashed rgba(255,255,255,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ff-text-soft);
+  font-size: .9rem;
+  margin-bottom: .6rem;
+  overflow: hidden;
+}
+.logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Botones */
+.btn-outline-light {
+  background: transparent;
+  color: var(--ff-text-light);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 10px;
+  font-weight: 500;
+}
+.btn-outline-light:hover {
+  background: rgba(255,255,255,.08);
+}
+
+.btn-primary {
+  background: var(--ff-green);
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #111;
+}
+.btn-primary:hover {
+  background: #4cc74c;
+}
+
+.ff-avatar-btn{
+  width: 40px;                    /* un pelín más grande para que "resalte" */
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  border: 0;
+
+  /* Fondo: highlight sutil + degradado con la paleta */
+  background:
+    radial-gradient(140% 120% at 30% 20%, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 38%),
+    linear-gradient(135deg, var(--ff-green) 0%, #3FA33F 55%, var(--ff-green-l) 100%);
+
+  /* Anillo + sombra de elevación + brillo interior */
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.70),        /* anillo verde */
+    0 6px 14px rgba(0,0,0,.35),           /* drop shadow */
+    inset 0 1px 0 rgba(255,255,255,.16);  /* leve brillo */
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  cursor: pointer;
+
+  transition:
+    transform .08s ease,
+    box-shadow .15s ease,
+    filter .15s ease;
+}
+
+.ff-avatar-btn:hover{
+  box-shadow:
+    0 0 0 3px rgba(92,214,92,.80),
+    0 10px 22px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.22);
+  filter: saturate(1.06) brightness(1.03);
+  transform: translateY(-1px);
+}
+
+.ff-avatar-btn:active{
+  transform: translateY(0);
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.85),
+    0 6px 14px rgba(0,0,0,.45),
+    inset 0 0 0 999px rgba(0,0,0,.02);
+}
+
+/* La imagen PNG se centra y deja margen para que se vea el anillo verde */
+.ff-avatar-img{
+  width: 70%;
+  height: 70%;
+  object-fit: contain;      /* por si el PNG no es exactamente circular */
+  display: block;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.18)); /* micro realce */
+  opacity: .98;
+}
+
+/* Fallback si la imagen no carga: ícono blanco "avatar" dibujado sobre el mismo degradado */
+.ff-avatar-fallback{
+  background:
+    /* cabeza */
+    radial-gradient(circle at 50% 42%, #ffffff 18%, transparent 19%) 50% 40%/34% 34% no-repeat,
+    /* torso */
+    radial-gradient(circle at 50% 118%, #ffffff 64%, transparent 65%) 50% 85%/70% 50% no-repeat,
+    /* degradado verde base */
+    linear-gradient(135deg, var(--ff-green), var(--ff-green-l));
+  box-shadow:
+    0 0 0 2px rgba(92,214,92,.70),
+    0 6px 14px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.16);
+  border-radius: 50%;
+}
+
+.ff-avatar-btn{
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  /* base oscura + tinte verde sutil */
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(92,214,92,.26) 0%, rgba(44,122,44,.18) 60%, rgba(44,122,44,.12) 100%),
+    #1f2937;
+  border: 1px solid rgba(92,214,92,.40);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 0;
+  transition: background .2s ease, box-shadow .2s ease, border-color .2s ease, transform .08s ease;
+}
+.ff-avatar-btn:hover{
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(92,214,92,.40) 0%, rgba(44,122,44,.28) 60%, rgba(44,122,44,.18) 100%),
+    #1f2937;
+  border-color: rgba(92,214,92,.65);
+  box-shadow: 0 0 0 4px rgba(92,214,92,.22), inset 0 0 0 1px rgba(255,255,255,.08);
+  transform: translateY(-1px);
+}
+.ff-avatar-btn:active{ transform: translateY(0); box-shadow: 0 0 0 3px rgba(92,214,92,.28) inset; }
+
+/* Imagen del avatar */
+.ff-avatar-img{ width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+/* Fallback si no carga la imagen: dibujito blanco sobre degradado verde */
+.ff-avatar-fallback{
+  background:
+    radial-gradient(circle at 50% 45%, #ffffff 18%, transparent 19%) 50% 40%/34% 34% no-repeat,
+    radial-gradient(circle at 50% 120%, #ffffff 64%, transparent 65%) 50% 85%/70% 50% no-repeat,
+    linear-gradient(135deg, #2C7A2C, #5CD65C);
+  border: 1px solid rgba(255,255,255,.30);
+}
