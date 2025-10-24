@@ -1,6 +1,15 @@
 <?php
- 
+  session_start();
   $BASE = '/4everFootball';
+
+  // CSRF simple
+  if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+  }
+  $CSRF = $_SESSION['csrf'];
+
+  // ?next=/ruta-a-volver (opcional)
+  $next = isset($_GET['next']) && is_string($_GET['next']) ? $_GET['next'] : "$BASE/index.php";
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -9,17 +18,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Crear cuenta | 4everFootball</title>
 
-  
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <!-- Estilos específicos de login/registro -->
-  <link rel="stylesheet" href="<?= $BASE ?>/css/iniciaRegister.css?v=107">
+  <link rel="stylesheet" href="<?= $BASE ?>/css/iniciaRegister.css?v=108">
 </head>
-<body class="ff-bg">
 
+<body class="ff-bg">
   <div class="container py-4">
     <div class="row min-vh-100 align-items-center g-5">
-      <!-- Branding -->
+
+      <!-- IZQUIERDA: logo + frase -->
       <div class="col-12 col-lg-6 text-center text-lg-start">
         <div class="brand-wrap">
           <img src="<?= $BASE ?>/img/logo.svg" alt="4everFootball" class="brand-logo">
@@ -27,7 +37,7 @@
         </div>
       </div>
 
-      <!-- Tarjeta registro -->
+            <!-- DERECHA: tarjeta registro -->
       <div class="col-12 col-lg-6 d-flex justify-content-center">
         <main class="auth-card auth-card--wide glass-card card shadow p-4 w-100">
           <h1 class="ff-title text-center mb-3">Crear cuenta</h1>
@@ -35,6 +45,9 @@
 
           <form id="registerForm" class="reg-grid" action="<?= $BASE ?>/api/register.php"
                 method="post" enctype="multipart/form-data" novalidate>
+            <!-- Seguridad y retorno -->
+            <input type="hidden" name="csrf" value="<?= htmlspecialchars($CSRF) ?>">
+            <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
 
             <!-- IZQUIERDA -->
             <section class="reg-left">
@@ -58,15 +71,16 @@
               <div class="reg-row-single">
                 <div>
                   <label class="form-label" for="last_name_m">Apellido materno</label>
-                  <input class="form-control" id="last_name_m" name="last_name_m" required>
+                  <input class="form-control" id="last_name_m" name="last_name_m" required autocomplete="additional-name">
                   <div class="invalid-feedback">Escribe tu apellido materno.</div>
                 </div>
               </div>
-              <!-- Fecha de nacimiento -->
+              <!-- Fecha de nacimiento (máx hoy - 12 años) -->
               <div class="reg-row-single">
                 <div>
                   <label class="form-label" for="birth_date">Fecha de nacimiento</label>
-                  <input class="form-control" type="date" id="birth_date" name="birth_date" required>
+                  <input class="form-control" type="date" id="birth_date" name="birth_date"
+                         required max="<?= date('Y-m-d', strtotime('-12 years')) ?>">
                   <div class="form-text hint-inline">Debes tener 12 años o más.</div>
                   <div class="invalid-feedback">Verifica tu fecha (mínimo 12 años).</div>
                 </div>
@@ -107,7 +121,8 @@
               </div>
             </section>
 
-            <!-- DERECHA -->
+
+                        <!-- DERECHA -->
             <aside class="reg-right">
               <div class="idbox">
                 <div class="label mb-2">Foto de perfil (formato credencial)</div>
@@ -125,7 +140,8 @@
               <div class="reg-row-dual">
                 <div>
                   <label class="form-label" for="email">Correo electrónico</label>
-                  <input class="form-control" type="email" id="email" name="email" required autocomplete="email" placeholder="tucorreo@ejemplo.com">
+                  <input class="form-control" type="email" id="email" name="email" required
+                         autocomplete="email" placeholder="tucorreo@ejemplo.com">
                   <div class="invalid-feedback">Ingresa un correo válido.</div>
                 </div>
                 <div>
@@ -136,12 +152,12 @@
                            pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':&quot;\\|,.<>\/?]).{8,}">
                     <button type="button" class="btn btn-outline-light eye-btn px-3" id="togglePwd"
                             aria-label="Mostrar contraseña" aria-pressed="false">
-                      <!-- Icono eye -->
+                      <!-- eye -->
                       <svg class="icon icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <path d="M12 5c5.7 0 10 5.25 10 7s-4.3 7-10 7S2 13.75 2 12 6.3 5 12 5Z" stroke="currentColor" stroke-width="1.8"/>
                         <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/>
                       </svg>
-                      <!-- Icono eye-off -->
+                      <!-- eye-off -->
                       <svg class="icon icon-eye-off d-none" width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8"/>
                         <path d="M12 5c5.7 0 10 5.25 10 7 0 .95-.58 2.3-1.7 3.64M6 7.4C3.9 9 2 11.1 2 12c0 1.75 4.3 7 10 7 1.6 0 3.08-.3 4.4-.85" stroke="currentColor" stroke-width="1.8"/>
@@ -166,35 +182,38 @@
     </div>
   </div>
 
+
   <script>
-    // Toggle contraseña
-    function setupEyeToggle(inputId, btnId){
-      const input = document.getElementById(inputId);
-      const btn   = document.getElementById(btnId);
-      if (!input || !btn) return;
+  // Toggle contraseña
+  (function setupEyeToggle(){
+    const input = document.getElementById('password');
+    const btn   = document.getElementById('togglePwd');
+    if (!input || !btn) return;
 
-      const eyeOn  = btn.querySelector('.icon-eye');
-      const eyeOff = btn.querySelector('.icon-eye-off');
+    const eyeOn  = btn.querySelector('.icon-eye');
+    const eyeOff = btn.querySelector('.icon-eye-off');
 
-      btn.addEventListener('click', () => {
-        const showing = input.type === 'text';
-        input.type = showing ? 'password' : 'text';
-        eyeOn.classList.toggle('d-none', !showing);
-        eyeOff.classList.toggle('d-none', showing);
-        btn.setAttribute('aria-pressed', String(!showing));
-        btn.setAttribute('aria-label', showing ? 'Mostrar contraseña' : 'Ocultar contraseña');
-      });
-    }
-    setupEyeToggle('password','togglePwd');
+    btn.addEventListener('click', () => {
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      eyeOn.classList.toggle('d-none', !showing);
+      eyeOff.classList.toggle('d-none', showing);
+      btn.setAttribute('aria-pressed', String(!showing));
+      btn.setAttribute('aria-label', showing ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    });
+  })();
 
+  // Lógica de formulario
+  (function(){
     const form   = document.getElementById('registerForm');
     const msgEl  = document.getElementById('regMessage');
     const submit = document.getElementById('submitBtn');
+
     const showMsg  = (t, type='danger') => { msgEl.className = `alert alert-${type} small`; msgEl.textContent = t; };
     const clearMsg = () => { msgEl.className = 'small mb-3'; msgEl.textContent = ''; };
     const setLoading = (v) => { if (submit){ submit.disabled = v; submit.textContent = v ? 'Creando…' : 'Crear cuenta'; } };
 
-    // Validaciones
+    // Validaciones cliente
     function isAtLeast12(birth){
       if(!birth) return false;
       const bd = new Date(birth);
@@ -214,7 +233,7 @@
       return okType && okSize;
     }
 
-    // Preview
+    // Preview foto
     document.getElementById('photo')?.addEventListener('change', (e) => {
       const f = e.target.files?.[0];
       const img = document.getElementById('photoPreviewImg');
@@ -228,12 +247,12 @@
       validatePhoto();
     });
 
-    // Validación fecha
+    // Validación fecha onChange
     document.getElementById('birth_date')?.addEventListener('change', (e)=>{
       e.target.setCustomValidity(isAtLeast12(e.target.value) ? '' : 'Eres menor de 12');
     });
 
-    // Submit
+    // Submit AJAX
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearMsg();
@@ -252,12 +271,16 @@
       setLoading(true);
       try{
         const fd   = new FormData(form);
-        const resp = await fetch(form.action, { method:'POST', body:fd, credentials:'same-origin' });
+        const resp = await fetch(form.action, { method:'POST', body: fd, credentials:'same-origin' });
         const data = await resp.json().catch(()=>null);
+
         if (resp.ok && data && (data.ok === true || data.status === 'ok')) {
           showMsg(data.msg || 'Cuenta creada correctamente.', 'success');
-          if (data.user) localStorage.setItem('ff_user', JSON.stringify(data.user));
-          location.href = '<?= $BASE ?>/index.php';
+          if (data.user) try{ localStorage.setItem('ff_user', JSON.stringify(data.user)); }catch{}
+          const next = (data.next && typeof data.next === 'string')
+                     ? data.next
+                     : (form.querySelector('input[name="next"]')?.value || '<?= $BASE ?>/index.php');
+          location.href = next;
         } else {
           showMsg((data && (data.msg || data.error)) || 'No se pudo crear la cuenta.');
         }
@@ -268,6 +291,7 @@
         setLoading(false);
       }
     });
-  </script>
+  })();
+</script>
 </body>
 </html>

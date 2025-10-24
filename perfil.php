@@ -28,7 +28,7 @@
 
     
     <nav class="d-flex align-items-center gap-2 ms-auto">
-      <button id="publishBtn" class="btn btn-register" type="button">Publicar</button>
+      <!-- <button id="publishBtn" class="btn btn-register" type="button">Publicar</button>-->
 
       <div class="ff-profile position-relative">
         <button id="profileBtn" class="ff-avatar-btn" type="button"
