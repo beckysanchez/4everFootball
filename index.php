@@ -280,20 +280,35 @@ function requireAuth({title='Necesitas iniciar sesión', msg='Para continuar deb
 function buildProfileMenu(){
   const u = getUser();
   let html = '';
+
   if (!u){
     html += `<a class="ff-dropdown-item" href="${BASE}/login.php">Iniciar sesión</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/register.php">Crear cuenta</a>`;
   } else {
     html += `<div class="ff-dropdown-item ff-user-greet">Hola, ${u.name || u.email}</div>`;
+
+    // Accesos para cualquier usuario logueado
     html += `<a class="ff-dropdown-item" href="${BASE}/perfil.php">Mi perfil</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/mispublicaciones.php">Mis posts</a>`;
+
+    // SOLO ADMIN
     if (u.isAdmin){
-      html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Panel de admin</a>`;
+      // Panel de usuarios (el que acabamos de hacer)
+      html += `<a class="ff-dropdown-item" href="${BASE}/admin-usuarios.php">Administrar Usuarios</a>`;
+
+      // Si luego tienes un panel de aprobaciones, déjalo listo:
+      html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Aprobar Publicacion</a>`;
+
+      // Crear comunidad (tu página protegida por admin_only.php)
       html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
+
+      // Abrir modal de nueva categoría
       html += `<a href="#" class="ff-dropdown-item" id="btnCreateCategory">Crear categoría</a>`;
     }
+
     html += `<button class="ff-dropdown-item logout text-start" id="logoutBtn" type="button">Cerrar sesión</button>`;
   }
+
   el.profileMenu.innerHTML = html;
 
   document.getElementById('logoutBtn')?.addEventListener('click', logout);

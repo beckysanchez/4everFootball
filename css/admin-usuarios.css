@@ -1,0 +1,104 @@
+/* =========================================================
+   4everFootball – admin-usuarios.css
+   (Panel de administración: listado de usuarios)
+   Paleta heredada + fondo + tarjetas glass + tabla + filtros
+   + badges + botones + paginación + responsive
+   ========================================================= */
+
+/* ---------- Paleta (igual que iniciaRegister.css) ---------- */
+:root{
+  --ff-gray-dark: rgb(23, 28, 22);
+  --ff-green:     #5CD65C;
+  --ff-green-l:   #5CD65C;
+  --ff-text-light:#EDEDED;
+  --ff-text-soft: #D6D6D6;
+
+  --ff-surface:    rgba(255,255,255,.06);
+  --ff-surface-h:  rgba(255,255,255,.09);
+  --ff-border:     rgba(255,255,255,.10);
+  --ff-border-2:   rgba(255,255,255,.18);
+  --ff-shadow:     0 14px 30px rgba(0,0,0,.35);
+}
+html, body { background-color: var(--ff-gray-dark); color: var(--ff-text-light); }
+
+/* ---------- Títulos / layout ---------- */
+.ff-admin-container{ padding-top: 1rem; padding-bottom: 2rem; }
+.ff-admin-title { font-weight: 800; letter-spacing: .3px; color: #c7f7c7; }
+
+/* ---------- Tarjeta “glass” ---------- */
+.glass{
+  background: var(--ff-surface);
+  border: 1px solid var(--ff-border);
+  border-radius: 12px;
+  box-shadow: var(--ff-shadow), inset 0 0 0 1px rgba(255,255,255,.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.glass--pad { padding: .75rem; }
+.glass:hover{ border-color: var(--ff-border-2); }
+
+/* ---------- Filtros ---------- */
+.ff-filtros .form-label{ color: var(--ff-text-soft); font-weight: 600; }
+.ff-filtros .form-control,
+.ff-filtros .form-select{
+  background:#2b2b2b; color:#fff; border:1px solid var(--ff-border-2); height:42px;
+}
+.ff-filtros .form-control:focus,
+.ff-filtros .form-select:focus{
+  border-color: var(--ff-green-l); box-shadow: 0 0 0 .18rem rgba(92,214,92,.22);
+}
+
+/* ---------- Tabla ---------- */
+.table-wrap{ border-radius: 12px; overflow: hidden; }
+.table-dark{ --bs-table-bg: transparent; --bs-table-striped-bg: rgba(255,255,255,.04); }
+.table-dark th, .table-dark td{ color: var(--ff-text-light); vertical-align: middle; }
+.table-dark thead th{ background: rgba(255,255,255,.08); border-bottom-color: var(--ff-border-2); }
+.table-dark tbody tr{ transition: background .15s ease; }
+.table-dark tbody tr:hover{ background: var(--ff-surface-h); }
+
+/* ---------- Badges ---------- */
+.badge-admin{ background: #198754; }
+.badge-user { background: #6c757d; }
+.badge { font-weight: 700; letter-spacing:.2px; }
+
+/* ---------- Estados ---------- */
+.badge-state-on  { background:#198754; }
+.badge-state-off { background:#6c757d; }
+
+/* ---------- Botones ---------- */
+.btn-ff{
+  --btn-bg: var(--ff-green);
+  background: var(--btn-bg);
+  color:#fff; border:none; height:38px; font-weight:700;
+}
+.btn-ff:hover{ filter: brightness(.95); color:#fff; }
+.btn-ff-outline{
+  background: transparent; color:#fff; border:1px solid var(--ff-border-2); height:38px;
+}
+.btn-ff-outline:hover{ background: var(--ff-surface-h); border-color: var(--ff-green-l); }
+
+/* Acciones en tabla */
+.btn-action-on  { border-color:#198754; color:#d1ffd1; }
+.btn-action-off { border-color:#a4822f; color:#ffe7a6; }
+.btn-action-on:hover  { background: rgba(25,135,84,.15); }
+.btn-action-off:hover { background: rgba(255,193,7,.15); }
+
+/* ---------- Paginación ---------- */
+.pagination .page-link{
+  background: transparent; color:#fff; border-color: var(--ff-border-2);
+}
+.pagination .page-item.active .page-link{
+  background: var(--ff-green); border-color: var(--ff-green); color:#1f1f1f; font-weight:800;
+}
+.pagination .page-link:hover{ background: var(--ff-surface-h); }
+
+/* ---------- Helpers ---------- */
+.text-soft{ color: var(--ff-text-soft); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 992px){
+  .ff-admin-actions{ margin-top:.5rem; }
+}
+@media (max-width: 576px){
+  .ff-filtros .row > * { margin-bottom:.4rem; }
+}
