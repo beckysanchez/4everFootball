@@ -3,7 +3,7 @@ DELIMITER //
 CREATE PROCEDURE sp_crear_usuario (
     IN p_nombre_completo VARCHAR(150),
     IN p_fecha_nacimiento DATE,
-    IN p_genero ENUM('Masculino', 'Femenino', 'Otro'),
+    IN p_genero VARCHAR(10),
     IN p_pais_nacimiento VARCHAR(100),
     IN p_nacionalidad VARCHAR(100),
     IN p_email VARCHAR(120),

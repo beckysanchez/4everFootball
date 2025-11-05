@@ -163,120 +163,36 @@
   <script>
 const BASE = '<?= $BASE ?>';
 
-
-const DATA = [
-  {
-    id: 1,
-    titulo: 'Golazo inaugural 2010',
-    categoria: 'jugadas',
-    sede: '2010',
-    sedeNombre: 'Sudáfrica 2010',
-    sedeSlug: 'sudafrica-2010',
-    estado: 'aprobado',
-    likes: 420,
-    comentarios: 65,
-    fecha: '2010-06-11',
-    mediaType: 'image',
-    src: `${BASE}/img/sample1.jpg`
-  },
-  {
-    id: 2,
-    titulo: 'Entrevista al crack 2014',
-    categoria: 'entrevistas',
-    sede: '2014',
-    sedeNombre: 'Brasil 2014',
-    sedeSlug: 'brasil-2014',
-    estado: 'aprobado',
-    likes: 120,
-    comentarios: 10,
-    fecha: '2014-07-10',
-    mediaType: 'video',
-    src: `${BASE}/img/sample2.mp4`,
-    poster: `${BASE}/img/poster2.jpg`
-  },
-  {
-    id: 3,
-    titulo: 'Fiesta en Lusail 2022',
-    categoria: 'sedes',
-    sede: '2022',
-    sedeNombre: 'Qatar 2022',
-    sedeSlug: 'qatar-2022',
-    estado: 'aprobado',
-    likes: 980,
-    comentarios: 112,
-    fecha: '2022-12-18',
-    mediaType: 'image',
-    src: `${BASE}/img/sample4.jpg`
-  },
-  {
-    id: 4,
-    titulo: 'Final en Luzhnikí 2018',
-    categoria: 'sedes',
-    sede: '2018',
-    sedeNombre: 'Rusia 2018',
-    sedeSlug: 'rusia-2018',
-    estado: 'aprobado',
-    likes: 210,
-    comentarios: 34,
-    fecha: '2018-07-15',
-    mediaType: 'image',
-    src: `${BASE}/img/sample3.jpg`
-  },
-];
-
-const GROUPS = [
-  { slug:'qatar-2022',  nombre:'Qatar 2022',        img:`${BASE}/img/2022.png` },
-  { slug:'rusia-2018',  nombre:'Rusia 2018',        img:`${BASE}/img/2018.png` },
-  { slug:'brasil-2014', nombre:'Brasil 2014',       img:`${BASE}/img/2014.png` },
-  { slug:'sudafrica-2010', nombre:'Sudáfrica 2010', img:`${BASE}/img/2010.png` },
-  { slug:'alemania-2006',  nombre:'Alemania 2006',  img:`${BASE}/img/2006.png` },
-  { slug:'corea-japon-2002', nombre:'Corea/Japón 2002', img:`${BASE}/img/2002.png` },
-];
-
-
-const GROUP_MAP = GROUPS.reduce((acc, g) => {
-  acc[g.slug] = g;
-  return acc;
-}, {});
-
-// Elements
+// ======== ELEMENTOS GLOBALES ========
 const el = {
-  header: document.getElementById('siteHeader'),
-  profileBtn: document.getElementById('profileBtn'),
-  profileMenu: document.getElementById('profileMenu'),
   cards: document.getElementById('cards'),
   empty: document.getElementById('empty'),
-  form: document.getElementById('filterForm'),
   msg: document.getElementById('listMessage'),
-  qHeader: document.getElementById('qHeader'),
-  headerSearch: document.getElementById('headerSearch'),
-  cat: document.getElementById('cat'),
-  orden: document.getElementById('orden'),
+  profileBtn: document.getElementById('profileBtn'),
+  profileMenu: document.getElementById('profileMenu'),
   gruposRight: document.getElementById('gruposRight'),
-  publishBtn: document.getElementById('publishBtn'),
+  formCreateCategory: document.getElementById('formCreateCategory'),
+  saveCategoryBtn: document.getElementById('saveCategoryBtn'),
+  createCategoryMsg: document.getElementById('createCategoryMsg')
 };
 
-
-
-// --- Sesión simulada ---
-function getUser(){ try{ return JSON.parse(localStorage.getItem('ff_user')||'null'); }catch{ return null; } }
-function setUser(u){ if (u) localStorage.setItem('ff_user', JSON.stringify(u)); else localStorage.removeItem('ff_user'); buildProfileMenu(); }
-function logout(){ setUser(null); location.href = `${BASE}/index.php`; }
-
-function requireAuth({title='Necesitas iniciar sesión', msg='Para continuar debes iniciar sesión o crear una cuenta.'}={}) {
-  const u = getUser();
-  if (u) return true;
-  const url = new URL(`${BASE}/estado.php`, location.origin);
-  url.searchParams.set('type','warning');
-  url.searchParams.set('title', title);
-  url.searchParams.set('msg', msg);
-  url.searchParams.set('primary','Iniciar sesión:' + `${BASE}/login.php`);
-  url.searchParams.set('secondary','Crear cuenta:' + `${BASE}/register.php`);
-  location.href = url.toString();
-  return false;
+// ======== SESIÓN ========
+async function fetchUser(){
+  try {
+    const res = await fetch(`${BASE}/api/get_user.php`);
+    const user = await res.json();
+    if (user) localStorage.setItem('ff_user', JSON.stringify(user));
+    else localStorage.removeItem('ff_user');
+    buildProfileMenu();
+  } catch {
+    buildProfileMenu();
+  }
 }
 
-// --- Build Profile Menu ---
+function getUser(){ try{ return JSON.parse(localStorage.getItem('ff_user')); }catch{ return null; } }
+function logout(){ localStorage.removeItem('ff_user'); location.href = `${BASE}/index.php`; }
+
+// ======== MENÚ PERFIL ========
 function buildProfileMenu(){
   const u = getUser();
   let html = '';
@@ -285,24 +201,14 @@ function buildProfileMenu(){
     html += `<a class="ff-dropdown-item" href="${BASE}/login.php">Iniciar sesión</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/register.php">Crear cuenta</a>`;
   } else {
-    html += `<div class="ff-dropdown-item ff-user-greet">Hola, ${u.name || u.email}</div>`;
-
-    // Accesos para cualquier usuario logueado
+    html += `<div class="ff-dropdown-item ff-user-greet">Hola, ${u.nombre || u.name || u.email}</div>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/perfil.php">Mi perfil</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/mispublicaciones.php">Mis posts</a>`;
 
-    // SOLO ADMIN
-    if (u.isAdmin){
-      // Panel de usuarios (el que acabamos de hacer)
+    if (u.isAdmin || u.rol_id == 1) {
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-usuarios.php">Administrar Usuarios</a>`;
-
-      // Si luego tienes un panel de aprobaciones, déjalo listo:
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Aprobar Publicacion</a>`;
-
-      // Crear comunidad (tu página protegida por admin_only.php)
       html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
-
-      // Abrir modal de nueva categoría
       html += `<a href="#" class="ff-dropdown-item" id="btnCreateCategory">Crear categoría</a>`;
     }
 
@@ -317,16 +223,19 @@ function buildProfileMenu(){
   if (btnCreate){
     btnCreate.addEventListener('click', (e)=>{
       e.preventDefault();
-      if (!getUser()?.isAdmin) return alert('Solo administradores pueden crear categorías.');
+      const user = getUser();
+      if (!user || !(user.isAdmin || user.rol_id == 1)) {
+        alert('Solo administradores pueden crear categorías.');
+        return;
+      }
       const modalEl = document.getElementById('createCategoryModal');
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
     });
   }
 }
-buildProfileMenu();
 
-// --- Dropdown perfil ---
+// Dropdown toggle
 el.profileBtn.addEventListener('click', () => {
   const open = el.profileMenu.classList.toggle('show');
   el.profileBtn.setAttribute('aria-expanded', String(open));
@@ -338,139 +247,102 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// para ver que tenga login
-function getFollowing(){
-  try{ return new Set(JSON.parse(localStorage.getItem('ff_following')||'[]')); }catch{ return new Set(); }
-}
-function setFollowing(set){ localStorage.setItem('ff_following', JSON.stringify(Array.from(set))); }
-const following = getFollowing();
-function initials(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+// ======== GUARDAR NUEVA CATEGORÍA ========
+el.saveCategoryBtn?.addEventListener('click', async ()=>{
+  const nombre = document.getElementById('categoryName').value.trim();
+  const slug = document.getElementById('categorySlug').value.trim();
 
-function groupItem(g){
-  const isFollowing = following.has(g.slug);
-  const btnClass = isFollowing ? 'ff-follow-btn ff-following' : 'ff-follow-btn ff-notfollowing';
-  const btnText  = isFollowing ? 'Seguido' : 'Seguir';
-  const href = `${BASE}/sede.php?slug=${encodeURIComponent(g.slug)}`; 
-  const avatar = g.img
-    ? `<span class="ff-avatar-sm"><img src="${g.img}" alt="${g.nombre}" onerror="this.remove();this.closest('.ff-avatar-sm').textContent='${initials(g.nombre)}'"></span>`
-    : `<span class="ff-avatar-sm">${initials(g.nombre)}</span>`;
-  return `
-    <div class="ff-group-item" data-slug="${g.slug}">
-      <a class="ff-group-link" href="${href}" title="${g.nombre}">
-        ${avatar}<span>${g.nombre}</span>
-      </a>
-      <button type="button" class="${btnClass} btn btn-sm">${btnText}</button>
-    </div>`;
-}
-
-function renderGroups(){
-  el.gruposRight.innerHTML = GROUPS.map(groupItem).join('');
-  el.gruposRight.querySelectorAll('.ff-group-item .btn').forEach(btn=>{
-    btn.addEventListener('click', (ev)=>{
-      if (!requireAuth({title:'Inicia sesión para seguir grupos', msg:'Para seguir y recibir contenido de un grupo necesitas iniciar sesión.'})) return;
-      const wrap = ev.target.closest('.ff-group-item');
-      const slug = wrap.dataset.slug;
-      if (following.has(slug)) following.delete(slug);
-      else following.add(slug);
-      setFollowing(following);
-      renderGroups();
-    });
-  });
-}
-renderGroups();
-
-// 
-function badgeEstado(row){
-  return row.estado === 'aprobado'
-    ? '<span class="ff-chip">Aprobado</span>'
-    : '<span class="ff-chip">En revisión</span>';
-}
-function mediaBlock(row){
-  const hasSrc = !!row.src;
-  if (row.mediaType === 'video') {
-    return `<div class="ff-post-media ${hasSrc ? '' : 'ff-empty'}">
-      ${hasSrc ? `<video src="${row.src}" ${row.poster?`poster="${row.poster}"`:''} controls playsinline></video>` : ''}
-    </div>`;
+  if (!nombre || !slug) {
+    el.createCategoryMsg.textContent = 'Todos los campos son obligatorios.';
+    return;
   }
-  return `<div class="ff-post-media ${hasSrc ? '' : 'ff-empty'}">
-    ${hasSrc ? `<img src="${row.src}" alt="${row.titulo}" onerror="this.closest('.ff-post-media').classList.add('ff-empty'); this.remove();">` : ''}
-  </div>`;
+
+  el.createCategoryMsg.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch(`${BASE}/api/create_category.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, slug })
+    });
+    const json = await res.json();
+
+    if (json.ok) {
+      el.createCategoryMsg.textContent = '✅ Categoría creada correctamente';
+      setTimeout(()=> location.reload(), 1000);
+    } else {
+      el.createCategoryMsg.textContent = '❌ ' + (json.error || 'Error al crear categoría');
+    }
+  } catch {
+    el.createCategoryMsg.textContent = '❌ Error de conexión con el servidor';
+  }
+});
+
+// ======== FEED ========
+async function loadFeed(){
+  el.msg.textContent = 'Cargando publicaciones...';
+  try {
+    const res = await fetch(`${BASE}/api/feed.php`);
+    const json = await res.json();
+    if (json.ok) renderFeed(json.data);
+    else el.msg.textContent = 'No se pudieron cargar las publicaciones.';
+  } catch {
+    el.msg.textContent = 'Error de conexión con el servidor.';
+  }
 }
 
-
-function card(row){
-  const g = GROUP_MAP[row.sedeSlug];
-  const avatarHTML = (g && g.img)
-    ? `<img src="${g.img}" alt="${g?.nombre || 'Sede'}" onerror="this.remove()">`
-    : '';
-
-  return `
-  <article class="ff-post">
-    <div class="ff-post-header">
-      <div class="ff-post-meta">
-        <div class="ff-avatar">${avatarHTML}</div>
-        <div>
-          <div class="d-flex align-items-center gap-2">
-            <strong>${row.titulo}</strong>
-            ${badgeEstado(row)}
-          </div>
-          <div class="ff-post-sub">
-            <a class="ff-group-link-mini"
-               href="${BASE}/sede.php?slug=${encodeURIComponent(row.sedeSlug)}"
-               title="Ver página de ${row.sedeNombre}">
-              ${row.sedeNombre}
-            </a>
-            · ${new Date(row.fecha).toLocaleDateString()}
-          </div>
-        </div>
+function renderFeed(list){
+  el.cards.innerHTML = list.map(row => `
+    <article class="ff-post">
+      <div class="ff-post-header">
+        <h5>${row.titulo}</h5>
+        <small>${row.categoria} · ${new Date(row.fecha).toLocaleDateString()}</small>
       </div>
-      <span class="ff-chip text-uppercase">${row.categoria}</span>
+      ${row.mediaType === 'video'
+        ? `<video src="${row.src}" ${row.poster ? `poster="${row.poster}"` : ''} controls playsinline></video>`
+        : `<img src="${row.src}" alt="${row.titulo}" onerror="this.remove()">`}
+    </article>
+  `).join('');
+  el.empty.classList.toggle('d-none', list.length > 0);
+  el.msg.textContent = '';
+}
+
+// ======== GRUPOS (dinámico desde BD) ========
+async function loadGroups() {
+  try {
+    const res = await fetch(`${BASE}/api/get_grupos.php`);
+    const json = await res.json();
+    if (json.ok) renderGroups(json.data);
+    else el.gruposRight.innerHTML = `<small class="text-secondary">Sin comunidades disponibles aún.</small>`;
+  } catch {
+    el.gruposRight.innerHTML = `<small class="text-secondary">Error al cargar comunidades.</small>`;
+  }
+}
+
+function renderGroups(grupos) {
+  if (!grupos.length) {
+    el.gruposRight.innerHTML = `<small class="text-secondary">Sin comunidades creadas todavía.</small>`;
+    return;
+  }
+
+  el.gruposRight.innerHTML = grupos.map(g => `
+    <div class="ff-group-item d-flex justify-content-between align-items-center">
+      <a class="d-flex align-items-center gap-2 text-decoration-none" href="${BASE}/sede.php?slug=${g.slug}">
+        <img src="${g.logo}" alt="${g.nombre}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">
+        <span>${g.nombre}</span>
+      </a>
+      <button class="btn btn-sm btn-outline-light">Seguir</button>
     </div>
-    ${mediaBlock(row)}
-    <div class="ff-actions">
-      <button class="btn btn-outline-light like-btn" data-id="${row.id}">👍 <span class="like-count">${row.likes}</span></button>
-      <button class="btn btn-login comment-btn" data-id="${row.id}">Comentar</button>
-    </div>
-  </article>`;
+  `).join('');
 }
 
 
-function render(list){
-  el.cards.innerHTML = list.map(card).join('');
-  el.empty.classList.toggle('d-none', list.length !== 0);
-  el.msg.className = 'small mb-3'; el.msg.textContent = '';
+// ======== INICIALIZACIÓN ========
+fetchUser();
+loadFeed();
+loadGroups();
 
-  
-  el.cards.querySelectorAll('.like-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (!requireAuth({title:'Inicia sesión para dar like', msg:'Para reaccionar a publicaciones necesitas iniciar sesión.'})) return;
-      const count = btn.querySelector('.like-count');
-      count.textContent = (parseInt(count.textContent || '0', 10) + 1);
-    });
-  });
+</script>
 
-  
-  el.cards.querySelectorAll('.comment-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if (!requireAuth({title:'Inicia sesión para comentar', msg:'Para escribir un comentario necesitas iniciar sesión.'})) return;
-      const id = btn.dataset.id;
-      location.href = `${BASE}/detalle-publicacion.php?id=${encodeURIComponent(id)}`;
-    });
-  });
-}
-
-
-
-// Publicar
-if (el.publishBtn) {
-  el.publishBtn.addEventListener('click', () => {
-    if (!requireAuth({title:'Necesitas iniciar sesión', msg:'Para publicar contenido debes iniciar sesión o crear una cuenta.'})) return;
-    location.href = `${BASE}/crear-publicacion.php`;
-  });
-}
-
-// Render inicial
-render(DATA);
-  </script>
 </body>
 </html>

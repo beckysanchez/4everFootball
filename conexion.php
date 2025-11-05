@@ -1,6 +1,6 @@
 <?php
 // conexion.php
-$conexion = new mysqli('localhost', 'root', 'Monse171002.', 'mundial_reddit');
+$conexion = new mysqli('localhost', 'root', 'Password1234', 'mundial_reddit');
 
 if ($conexion->connect_errno) {
     die('Error de conexión MySQL: ' . $conexion->connect_error);

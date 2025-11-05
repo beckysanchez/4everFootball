@@ -250,3 +250,50 @@ body {
     linear-gradient(135deg, #2C7A2C, #5CD65C);
   border: 1px solid rgba(255,255,255,.30);
 }
+
+.form-control::placeholder {
+  color: #c7c7c7 !important;
+  opacity: 0.9;
+}
+
+/* Placeholders más visibles en modo oscuro */
+.form-control::placeholder,
+.form-select::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 400;
+  opacity: 1 !important;
+}
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+input::-ms-input-placeholder,
+textarea::-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+/* 🔆 Placeholders supervisibles en modo oscuro (forzados en todos los navegadores) */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #f1f1f1 !important;   /* texto casi blanco */
+  opacity: 1 !important;       /* visibilidad total */
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+
+/* Compatibilidad con navegadores antiguos */
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: #f1f1f1 !important;
+  opacity: 1 !important;
+}
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: #f1f1f1 !important;
+}
+input::-ms-input-placeholder,
+textarea::-ms-input-placeholder {
+  color: #f1f1f1 !important;
+}
