@@ -1,16 +1,26 @@
 <?php
-  session_start();
-  $BASE = '/4everFootball';
+declare(strict_types=1);
 
-  // CSRF simple
-  if (empty($_SESSION['csrf'])) {
-    $_SESSION['csrf'] = bin2hex(random_bytes(32));
-  }
-  $CSRF = $_SESSION['csrf'];
+$root = realpath(__DIR__);
+ini_set('session.save_path', $root . '/sessions');
+ini_set('session.cookie_path', '/');
+session_start();
 
-  // Soporta ?next=/ruta-a-volver (fallback al inicio)
-  $next = isset($_GET['next']) && is_string($_GET['next']) ? $_GET['next'] : "$BASE/index.php";
+// 🔒 Regenerar token CSRF siempre que falte o cambie la sesión
+if (empty($_SESSION['csrf']) || strlen($_SESSION['csrf']) < 20) {
+  $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
+$CSRF = $_SESSION['csrf'];
+
+// Base para rutas
+$BASE = '/4everFootball';
+
+// Soporta ?next=/ruta-a-volver (fallback al inicio)
+$next = isset($_GET['next']) && is_string($_GET['next'])
+  ? $_GET['next']
+  : "$BASE/index.php";
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

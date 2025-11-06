@@ -13,7 +13,32 @@ if (!isset($_SESSION['user']) || !$_SESSION['user']['isAdmin']) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Crear comunidad | 4everFootball</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="<?= $BASE ?>/css/pagcss.css?v=41">
+  <link rel="stylesheet" href="<?= $BASE ?>/css/pagcss.css?v=42">
+  <style>
+    #snackbar {
+      visibility: hidden;
+      min-width: 300px;
+      background-color: #00c853;
+      color: white;
+      text-align: center;
+      border-radius: 12px;
+      padding: 16px;
+      position: fixed;
+      z-index: 9999;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%) translateY(100%);
+      opacity: 0;
+      transition: all 0.4s ease-in-out;
+      font-weight: 500;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+    }
+    #snackbar.show {
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
 </head>
 <body class="ff-bg">
 
@@ -74,6 +99,7 @@ if (!isset($_SESSION['user']) || !$_SESSION['user']['isAdmin']) {
         <input id="portada_file" name="portada_file" type="file" class="form-control" accept="image/*">
         <div class="form-text">Puedes subir una imagen JPG o PNG, o pegar una URL.</div>
       </div>
+
       <!-- Botones -->
       <div class="d-flex justify-content-end gap-2 mt-4">
         <a href="<?= $BASE ?>/index.php" class="btn btn-outline-light">Cancelar</a>
@@ -84,7 +110,7 @@ if (!isset($_SESSION['user']) || !$_SESSION['user']['isAdmin']) {
 </main>
 
 <!-- Snackbar -->
-<div id="snackbar" class="position-fixed bottom-0 start-50 translate-middle-x text-center bg-success text-white py-2 px-4 rounded" style="display:none; z-index:9999;">✅ Comunidad creada correctamente</div>
+<div id="snackbar">✅ Comunidad creada correctamente</div>
 
 <script>
 const form = document.getElementById('communityForm');
@@ -94,6 +120,14 @@ const snackbar = document.getElementById('snackbar');
 
 desc.addEventListener('input', () => descCount.textContent = desc.value.length);
 
+// Función snackbar animado
+function mostrarSnackbar(mensaje, color = "#00c853") {
+  snackbar.textContent = mensaje;
+  snackbar.style.backgroundColor = color;
+  snackbar.classList.add("show");
+  setTimeout(() => snackbar.classList.remove("show"), 3500);
+}
+
 // Slug generator
 function generarSlug(nombre) {
   return nombre.toLowerCase()
@@ -101,6 +135,21 @@ function generarSlug(nombre) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+// Función de subida de imagen
+async function uploadImage(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('<?= $BASE ?>/api/upload_image.php', {
+    method: 'POST',
+    body: fd,
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (data.ok) return data.url;
+  throw new Error(data.error || 'Error al subir imagen');
+}
+
 // Envío del formulario
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -114,7 +163,7 @@ form.addEventListener('submit', async (e) => {
   };
 
   if (!data.nombre_comunidad || !data.descripcion) {
-    alert("Por favor, completa al menos el nombre y la descripción.");
+    mostrarSnackbar("⚠️ Faltan campos obligatorios", "#ff5252");
     return;
   }
 
@@ -134,54 +183,34 @@ form.addEventListener('submit', async (e) => {
     try { json = JSON.parse(text); }
     catch {
       console.error("⚠️ Respuesta inválida del servidor:", text);
-      alert("Error: respuesta del servidor no válida. Revisa consola (F12).");
+      mostrarSnackbar("Error: respuesta del servidor no válida", "#ff5252");
       return;
     }
 
     if (json.ok) {
-      snackbar.textContent = "✅ Comunidad creada correctamente";
-      snackbar.style.display = 'block';
-      setTimeout(() => snackbar.style.display = 'none', 3000);
+      mostrarSnackbar("✅ Comunidad creada correctamente");
       form.reset();
       descCount.textContent = "0";
       document.getElementById('logoPreview').textContent = 'Logo';
       document.getElementById('portadaPreview').textContent = 'Portada';
     } else {
-      alert("Error: " + (json.error || "No se pudo crear la comunidad"));
+      mostrarSnackbar("❌ " + (json.error || "No se pudo crear la comunidad"), "#ff5252");
     }
 
   } catch (err) {
-    alert("Error al conectar con el servidor: " + err.message);
+    mostrarSnackbar("Error al conectar con el servidor: " + err.message, "#ff5252");
   }
 });
 
-// Función de subida de imagen
-async function uploadImage(file) {
-  const fd = new FormData();
-  fd.append('file', file);
-  const res = await fetch('<?= $BASE ?>/api/upload_image.php', {
-    method: 'POST',
-    body: fd,
-    credentials: 'include'
-  });
-  const data = await res.json();
-  if (data.ok) return data.url;
-  throw new Error(data.error || 'Error al subir imagen');
-}
-
-// Validación de fuentes de imagen
+// Control: solo una fuente de imagen (URL o archivo)
 function toggleImageInputs(urlInput, fileInput) {
   urlInput.addEventListener("input", () => {
-    if (urlInput.value.trim() !== "") {
-      fileInput.disabled = true;
-      fileInput.value = "";
-    } else fileInput.disabled = false;
+    fileInput.disabled = urlInput.value.trim() !== "";
+    if (fileInput.disabled) fileInput.value = "";
   });
   fileInput.addEventListener("change", () => {
-    if (fileInput.files.length > 0) {
-      urlInput.disabled = true;
-      urlInput.value = "";
-    } else urlInput.disabled = false;
+    urlInput.disabled = fileInput.files.length > 0;
+    if (urlInput.disabled) urlInput.value = "";
   });
 }
 
@@ -197,7 +226,7 @@ function validarResolucionMinima(fileInput, minWidth, minHeight, tipo) {
     img.src = URL.createObjectURL(file);
     img.onload = function() {
       if (img.width < minWidth || img.height < minHeight) {
-        alert(`❌ La imagen del ${tipo} es demasiado pequeña.\nMínimo: ${minWidth}x${minHeight}px\nTu imagen: ${img.width}x${img.height}px`);
+        mostrarSnackbar(`❌ ${tipo} demasiado pequeño (${img.width}x${img.height}px). Mínimo ${minWidth}x${minHeight}px`, "#ff5252");
         fileInput.value = "";
       }
       URL.revokeObjectURL(img.src);
@@ -205,8 +234,8 @@ function validarResolucionMinima(fileInput, minWidth, minHeight, tipo) {
   });
 }
 
-validarResolucionMinima(document.getElementById("logo_file"), 300, 300, "logo");
-validarResolucionMinima(document.getElementById("portada_file"), 1200, 400, "portada");
+validarResolucionMinima(document.getElementById("logo_file"), 300, 300, "Logo");
+validarResolucionMinima(document.getElementById("portada_file"), 1200, 400, "Portada");
 </script>
 </body>
 </html>

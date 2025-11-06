@@ -1,7 +1,16 @@
 <?php
-  
-  $BASE = '/4everFootball';
+declare(strict_types=1);
+require_once __DIR__ . '/config/session_init.php';
+
+$BASE = '/4everFootball';
+
+// Detectar si hay sesión activa
+$user = $_SESSION['user'] ?? null;
+$isLogged = !empty($user);
+$isAdmin = $isLogged && ($user['rol'] ?? '') === 'ADMIN';
 ?>
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -44,7 +53,25 @@
                  decoding="async" loading="lazy"
                  onerror="this.style.visibility='hidden';this.parentElement.classList.add('ff-avatar-fallback');" />
           </button>
-          <div id="profileMenu" class="ff-dropdown" role="menu" aria-labelledby="profileBtn"></div>
+          <div id="profileMenu" class="ff-dropdown" role="menu" aria-labelledby="profileBtn">
+  <?php if ($isLogged): ?>
+    <div class="px-3 py-2 small text-white">
+      <strong><?= htmlspecialchars($user['nombre']) ?></strong><br>
+      <?= htmlspecialchars($user['email']) ?>
+    </div>
+    <hr class="m-1">
+    <a href="<?= $BASE ?>/perfil.php" class="dropdown-item">Mi perfil</a>
+    <a href="<?= $BASE ?>/mis-posts.php" class="dropdown-item">Mis publicaciones</a>
+    <?php if ($isAdmin): ?>
+      <a href="<?= $BASE ?>/admin-aprobaciones.php" class="dropdown-item">Panel de aprobaciones</a>
+    <?php endif; ?>
+    <a href="<?= $BASE ?>/api/logout.php" class="dropdown-item text-danger">Cerrar sesión</a>
+  <?php else: ?>
+    <a href="<?= $BASE ?>/login.php" class="dropdown-item">Iniciar sesión</a>
+    <a href="<?= $BASE ?>/register.php" class="dropdown-item">Crear cuenta</a>
+  <?php endif; ?>
+</div>
+
         </div>
       </nav>
     </div>
@@ -190,7 +217,21 @@ async function fetchUser(){
 }
 
 function getUser(){ try{ return JSON.parse(localStorage.getItem('ff_user')); }catch{ return null; } }
-function logout(){ localStorage.removeItem('ff_user'); location.href = `${BASE}/index.php`; }
+async function logout(e){
+  e?.preventDefault();
+
+  try {
+    const res = await fetch(`${BASE}/api/logout.php`, { method: 'POST' });
+    const data = await res.json();
+    console.log(data.msg || 'Sesión cerrada.');
+  } catch (err) {
+    console.error('Error al cerrar sesión:', err);
+  }
+
+  localStorage.removeItem('ff_user');
+  location.href = `${BASE}/index.php`;
+}
+
 
 // ======== MENÚ PERFIL ========
 function buildProfileMenu(){
@@ -205,7 +246,8 @@ function buildProfileMenu(){
     html += `<a class="ff-dropdown-item" href="${BASE}/perfil.php">Mi perfil</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/mispublicaciones.php">Mis posts</a>`;
 
-    if (u.isAdmin || u.rol_id == 1) {
+    if (u.rol === 'ADMIN') {
+
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-usuarios.php">Administrar Usuarios</a>`;
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Aprobar Publicacion</a>`;
       html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
@@ -328,14 +370,13 @@ function renderGroups(grupos) {
   el.gruposRight.innerHTML = grupos.map(g => `
     <div class="ff-group-item d-flex justify-content-between align-items-center">
       <a class="d-flex align-items-center gap-2 text-decoration-none" href="${BASE}/sede.php?slug=${g.slug}">
-        <img src="${g.logo}" alt="${g.nombre}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">
+        <img src="${g.logo || BASE + '/img/default_logo.png'}" alt="${g.nombre}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">
         <span>${g.nombre}</span>
       </a>
       <button class="btn btn-sm btn-outline-light">Seguir</button>
     </div>
   `).join('');
 }
-
 
 // ======== INICIALIZACIÓN ========
 fetchUser();

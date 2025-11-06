@@ -1,11 +1,15 @@
 <?php
-session_start();
-header('Content-Type: application/json; charset=utf-8');
+declare(strict_types=1);
+header('Content-Type: application/json; charset=UTF-8');
 
-if (!isset($_SESSION['user'])) {
+// Incluir la sesión global
+require_once __DIR__ . '/../config/session_init.php';
+
+// Si no hay sesión activa, devolvemos null
+if (empty($_SESSION['user'])) {
     echo json_encode(null);
     exit;
 }
 
-echo json_encode($_SESSION['user']);
-?>
+// Devolver los datos del usuario actual
+echo json_encode($_SESSION['user'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

@@ -157,4 +157,9 @@ ORDER BY u.usuario_id;
 ALTER TABLE mundial AUTO_INCREMENT = 1;
 DELETE FROM mundial WHERE mundial_id = 1;
 
+SET SQL_SAFE_UPDATES = 0;
+
+SELECT * FROM publicacion ORDER BY creada_en DESC;
+
+
 

@@ -327,3 +327,53 @@ html, body{ background: var(--ff-gray-dark) !important; color: var(--ff-text); }
   border:none;
 }
 .modal-content .btn-secondary:hover{ background:#5a6268; }
+
+
+/* === ESTILO ANTERIOR DE LOS GRUPOS (mejorado) === */
+
+.ff-group-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 6px 10px;
+  transition: background 0.2s ease;
+}
+
+.ff-group-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ff-group-item a span {
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.ff-group-item a span:hover {
+  color: var(--ff-green);
+}
+
+/* Botón "Seguir" redondeado */
+.ff-group-item .btn-outline-light {
+  border-radius: 50px;
+  font-size: 0.75rem;
+  padding: 4px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.ff-group-item .btn-outline-light:hover {
+  background: var(--ff-green);
+  border-color: var(--ff-green);
+  color: #111;
+  transform: translateY(-1px);
+}
+
+.ff-group-item img {
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.1);
+}

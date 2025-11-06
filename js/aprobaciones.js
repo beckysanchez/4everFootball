@@ -1,41 +1,52 @@
+document.addEventListener("DOMContentLoaded", () => {
+  cargarPublicaciones();
 
-  
-    function getUser(){ try{ return JSON.parse(localStorage.getItem('ff_user')||'null'); }catch{ return null; } }
+  document.getElementById("filterForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    cargarPublicaciones();
+  });
+});
 
-    function buildProfileMenu(){
-      const u = getUser();
-      const menu = document.getElementById('profileMenu');
-      let html = '';
-      if (!u){
-        html += `<a class="ff-dropdown-item" href="login.php">Iniciar sesión</a>`;
-        html += `<a class="ff-dropdown-item" href="register.php">Crear cuenta</a>`;
-      } else {
-        html += `<div class="ff-dropdown-item text-secondary">Hola, ${u.name || u.email}</div>`;
-        html += `<a class="ff-dropdown-item" href="perfil.php">Mi perfil</a>`;
-        if (u.isAdmin){ html += `<a class="ff-dropdown-item" href="admin-aprobaciones.php">Aprobaciones</a>`; }
-        html += `<button class="ff-dropdown-item text-start" id="logoutBtn" type="button">Cerrar sesión</button>`;
-      }
-      menu.innerHTML = html;
-      document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ localStorage.removeItem('ff_user'); location.href='index.php'; });
-    }
-    buildProfileMenu();
+function cargarPublicaciones() {
+  const q = document.getElementById("q").value;
+  const cat = document.getElementById("cat").value;
+  const sede = document.getElementById("sede").value;
+  const estado = document.getElementById("estado").value;
+  const orden = document.getElementById("orden").value;
 
-    
-    document.getElementById('publishBtn')?.addEventListener('click', ()=>{
-      if (!getUser()){
-        const url = new URL('estado.php', location.href);
-        url.searchParams.set('type','warning');
-        url.searchParams.set('title','Necesitas iniciar sesión');
-        url.searchParams.set('msg','Para publicar contenido debes iniciar sesión o crear una cuenta.');
-        url.searchParams.set('primary','Iniciar sesión:/login.php');
-        url.searchParams.set('secondary','Crear cuenta:/register.php');
-        location.href = url.toString();
+  fetch(`api/publicaciones_listar.php?q=${encodeURIComponent(q)}&cat=${cat}&sede=${sede}&estado=${estado}&orden=${orden}`)
+    .then(r => r.json())
+    .then(d => {
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+      if (!d.ok) return alert(d.error);
+
+      if (d.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-secondary py-4">No hay publicaciones pendientes</td></tr>`;
         return;
       }
-      location.href = 'crear-publicacion.php';
-    });
- 
 
+      d.data.forEach(pub => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input type="checkbox" class="form-check-input"></td>
+          <td>${pub.titulo}</td>
+          <td class="d-none d-md-table-cell">${pub.autor}</td>
+          <td>${pub.categoria}</td>
+          <td class="d-none d-sm-table-cell">${pub.sede}</td>
+          <td class="d-none d-lg-table-cell">${pub.creada_en}</td>
+          <td><span class="ff-status-badge ff-status-${pub.estatus.toLowerCase()}">${pub.estatus}</span></td>
+          <td class="text-end ff-action">
+            <button class="btn btn-sm btn-outline-light" onclick="verPreview(${pub.publicacion_id})">👁️ Ver</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    })
+    .catch(err => console.error(err));
+}
 
-  
-
+function verPreview(id) {
+  // Aquí podrías hacer otra llamada para mostrar la publicación en el modal
+  alert("Vista previa de la publicación ID: " + id);
+}
