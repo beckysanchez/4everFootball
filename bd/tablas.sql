@@ -161,5 +161,9 @@ SET SQL_SAFE_UPDATES = 0;
 
 SELECT * FROM publicacion ORDER BY creada_en DESC;
 
+SELECT publicacion_id, titulo, estatus FROM publicacion WHERE estatus = 'PENDIENTE';
+
+DESCRIBE mundial;
+DESCRIBE publicacion;
 
 

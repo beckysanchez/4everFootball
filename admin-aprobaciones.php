@@ -21,6 +21,41 @@
     .ff-modal-media img, .ff-modal-media video{ width:100%; height:100%; object-fit:cover; display:block; }
     .ff-modal-media.ff-empty{ background:linear-gradient(135deg,#0b1220 0%, #151e36 100%); }
     .ff-modal-media.ff-empty::after{ content:"Sin imagen/vídeo"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-weight:600; }
+  
+  #snackbar {
+  visibility: hidden;
+  min-width: 260px;
+  background-color: #222;
+  color: #fff;
+  text-align: center;
+  border-radius: 12px;
+  padding: 14px;
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  z-index: 9999;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+#snackbar.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 60px;
+}
+
+#snackbar.success {
+  background-color: #2ecc71;
+}
+
+#snackbar.error {
+  background-color: #e74c3c;
+}
+
+  
   </style>
 </head>
 <body class="ff-bg">
@@ -179,6 +214,9 @@
       </div>
     </div>
   </div>
+  <!-- Snackbar de notificación -->
+<div id="snackbar"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
  <script src="js/aprobaciones.js"></script>
 

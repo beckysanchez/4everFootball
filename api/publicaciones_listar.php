@@ -46,7 +46,7 @@ $query = "
         p.estatus,
         p.creada_en,
         COALESCE(c.nombre, 'Sin categoría') AS categoria,
-        COALESCE(m.nombre, 'Sin mundial') AS sede,
+        COALESCE(m.nombre_comunidad, 'Sin mundial') AS sede,
         COALESCE(u.nombre_completo, 'Usuario desconocido') AS autor
     FROM publicacion p
     LEFT JOIN categoria c ON p.categoria_id = c.categoria_id
@@ -65,23 +65,39 @@ if ($q) {
     $params[] = $q;
     $types .= 'ss';
 }
+
 if ($cat) {
     $query .= " AND c.nombre = ?";
     $params[] = $cat;
     $types .= 's';
 }
+
+// 🔹 Filtro flexible de sede/mundial
 if ($sede) {
-    $query .= " AND m.nombre LIKE CONCAT('%', ?, '%')";
-    $params[] = $sede;
-    $types .= 's';
+    if (is_numeric($sede)) {
+        // Si viene como ID (por ejemplo: 3)
+        $query .= " AND p.mundial_id = ?";
+        $params[] = $sede;
+        $types .= 'i';
+    } else {
+        // Si viene como texto (por búsqueda o valor manual)
+        $query .= " AND LOWER(m.nombre_comunidad) LIKE LOWER(CONCAT('%', ?, '%'))";
+        $params[] = $sede;
+        $types .= 's';
+    }
 }
-if ($estado) {
-    $query .= " AND p.estatus = ?";
+
+// 🔹 Filtro de estado
+if (!empty($estado)) {
+    $query .= " AND UPPER(p.estatus) = ?";
     $params[] = strtoupper($estado);
     $types .= 's';
 } else {
-    $query .= " AND p.estatus = 'PENDIENTE'";
+    // Si no se pasa estado, por defecto muestra solo pendientes
+    $query .= " AND UPPER(p.estatus) = 'PENDIENTE'";
 }
+
+
 
 // --- ORDEN ---
 switch ($orden) {
