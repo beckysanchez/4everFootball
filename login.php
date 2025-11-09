@@ -1,21 +1,16 @@
 <?php
 declare(strict_types=1);
 
-$root = realpath(__DIR__);
-ini_set('session.save_path', $root . '/sessions');
-ini_set('session.cookie_path', '/');
-session_start();
-
-// 🔒 Regenerar token CSRF siempre que falte o cambie la sesión
-if (empty($_SESSION['csrf']) || strlen($_SESSION['csrf']) < 20) {
-  $_SESSION['csrf'] = bin2hex(random_bytes(32));
-}
-$CSRF = $_SESSION['csrf'];
+// Incluir configuración unificada de sesión
+require_once __DIR__ . '/config/session_init.php';
 
 // Base para rutas
 $BASE = '/4everFootball';
 
-// Soporta ?next=/ruta-a-volver (fallback al inicio)
+// Token CSRF desde la sesión (ya generado en session_init.php)
+$CSRF = $_SESSION['csrf'];
+
+// Soporta ?next=/ruta-a-volver (por ejemplo al intentar entrar a una página protegida)
 $next = isset($_GET['next']) && is_string($_GET['next'])
   ? $_GET['next']
   : "$BASE/index.php";
@@ -49,8 +44,7 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
         </div>
       </div>
 
-
-            <!-- DERECHA: tarjeta de login -->
+      <!-- DERECHA: tarjeta de login -->
       <div class="col-12 col-md-6 d-flex justify-content-center">
         <main class="auth-card glass-card card shadow p-4 w-100">
           <h1 class="ff-title text-center mb-3">Iniciar sesión</h1>
@@ -107,9 +101,8 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
     </div>
   </div>
 
-
   <script>
-  // Toggle contraseña
+  // 👁 Toggle contraseña
   (function setupEyeToggle(){
     const input = document.getElementById('password');
     const btn   = document.getElementById('togglePwd');
@@ -125,10 +118,10 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
       btn.setAttribute('aria-label', showing ? 'Mostrar contraseña' : 'Ocultar contraseña');
     });
   })();
-</script>
+  </script>
 
-<script>
-  // AJAX login + validaciones
+  <script>
+  // 🔐 Envío AJAX del formulario
   (() => {
     const form      = document.getElementById('loginForm');
     const emailEl   = document.getElementById('email');
@@ -142,9 +135,12 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
     const clearMsg= () => { msgEl.className = 'small mb-3'; msgEl.textContent = ''; };
     const setLoading = (v) => {
       submitBtn.disabled = v;
-      if (v) { submitBtn.dataset.originalText = submitBtn.textContent;
-               submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Ingresando…';
-      } else { submitBtn.textContent = submitBtn.dataset.originalText || 'Ingresar'; }
+      if (v) {
+        submitBtn.dataset.originalText = submitBtn.textContent;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Ingresando…';
+      } else {
+        submitBtn.textContent = submitBtn.dataset.originalText || 'Ingresar';
+      }
     };
 
     let submittedOnce = false;
@@ -156,6 +152,7 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
       if (!pwdEl.checkValidity())   { ok = false; pwdEl.classList.add('is-invalid');   if (submittedOnce) pwdHelp.classList.add('text-danger'); }
       return ok;
     }
+
     [emailEl, pwdEl].forEach(el => {
       el.addEventListener('input', () => { if (submittedOnce) validateAndMark(); else el.classList.remove('is-invalid'); });
       el.addEventListener('change', () => { if (submittedOnce) validateAndMark(); else el.classList.remove('is-invalid'); });
@@ -169,18 +166,17 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
 
       setLoading(true);
       try {
-        // Construir parámetros (incluye csrf y next del form)
         const params = new URLSearchParams(new FormData(form));
 
         const resp = await fetch(form.action, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: params.toString(),
-          credentials: 'same-origin'
+          credentials: 'include' 
         });
 
         const text = await resp.text();
-        let data = null; try{ data = JSON.parse(text); }catch{}
+        let data = null; try { data = JSON.parse(text); } catch {}
 
         if (!resp.ok || !data || !data.ok) {
           showMsg((data && (data.error || data.msg)) || 'Correo o contraseña incorrectos.');
@@ -192,11 +188,12 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
         }
 
         const next = (data.next && typeof data.next === 'string')
-                   ? data.next
-                   : (form.querySelector('input[name="next"]')?.value || '<?= $BASE ?>/index.php');
+          ? data.next
+          : (form.querySelector('input[name="next"]')?.value || '<?= $BASE ?>/index.php');
 
         showMsg(data.msg || 'Inicio de sesión exitoso.', 'success');
         window.location.href = next;
+
       } catch (err) {
         console.error(err);
         showMsg('Hubo un problema. Intenta más tarde.');
@@ -205,6 +202,6 @@ $next = isset($_GET['next']) && is_string($_GET['next'])
       }
     });
   })();
-</script>
+  </script>
 </body>
 </html>

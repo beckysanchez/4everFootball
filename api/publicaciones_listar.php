@@ -1,42 +1,23 @@
 <?php
+declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 
-// --- FIX GLOBAL DE SESIÓN ---
-$root = realpath(__DIR__ . '/..');
-ini_set('session.save_path', $root . '/sessions'); // Carpeta compartida
-ini_set('session.cookie_path', '/'); // Asegura que sea global
-session_start();
+// 🔒 Protección global de sesión y rol
+require_once __DIR__ . '/../config/api_guard.php';
+require_role_api('ADMIN');
 
-// --- CONEXIÓN ---
-require_once(__DIR__ . '/../conexion.php');
+// 🔌 Conexión a la BD
+require_once __DIR__ . '/../conexion.php';
 
-// --- VERIFICACIÓN DE SESIÓN ---
-if (!isset($_SESSION['user'])) {
-    echo json_encode(['ok' => false, 'error' => 'Sesión no iniciada']);
-    exit;
-}
-
-// --- DEBUG opcional ---
-if (!isset($_SESSION['user']['rol'])) {
-    echo json_encode(['ok' => false, 'error' => 'Rol no encontrado', 'session' => $_SESSION]);
-    exit;
-}
-
-// --- VALIDACIÓN DE ADMIN ---
-if (strtolower($_SESSION['user']['rol']) !== 'admin') {
-    echo json_encode(['ok' => false, 'error' => 'No autorizado', 'rol' => $_SESSION['user']['rol']]);
-    exit;
-}
-
-// --- PARÁMETROS ---
-$q = trim($_GET['q'] ?? '');
-$cat = trim($_GET['cat'] ?? '');
-$sede = trim($_GET['sede'] ?? '');
+// --- Parámetros GET ---
+$q      = trim($_GET['q']      ?? '');
+$cat    = trim($_GET['cat']    ?? '');
+$sede   = trim($_GET['sede']   ?? '');
 $estado = trim($_GET['estado'] ?? '');
-$orden = trim($_GET['orden'] ?? 'reciente');
+$orden  = trim($_GET['orden']  ?? 'reciente');
 
-// --- QUERY BASE ---
-$query = "
+// --- Base del query ---
+$sql = "
     SELECT 
         p.publicacion_id,
         p.titulo,
@@ -50,68 +31,73 @@ $query = "
         COALESCE(u.nombre_completo, 'Usuario desconocido') AS autor
     FROM publicacion p
     LEFT JOIN categoria c ON p.categoria_id = c.categoria_id
-    LEFT JOIN mundial m ON p.mundial_id = m.mundial_id
-    LEFT JOIN usuarios u ON p.usuario_id = u.usuario_id
+    LEFT JOIN mundial m   ON p.mundial_id = m.mundial_id
+    LEFT JOIN usuarios u  ON p.usuario_id = u.usuario_id
     WHERE 1
 ";
 
-// --- FILTROS ---
 $params = [];
-$types = '';
+$types  = '';
 
-if ($q) {
-    $query .= " AND (p.titulo LIKE CONCAT('%', ?, '%') OR u.nombre_completo LIKE CONCAT('%', ?, '%'))";
+// --- Filtros dinámicos ---
+if ($q !== '') {
+    $sql .= " AND (p.titulo LIKE CONCAT('%', ?, '%') OR u.nombre_completo LIKE CONCAT('%', ?, '%'))";
     $params[] = $q;
     $params[] = $q;
     $types .= 'ss';
 }
 
-if ($cat) {
-    $query .= " AND c.nombre = ?";
+if ($cat !== '') {
+    $sql .= " AND c.nombre = ?";
     $params[] = $cat;
     $types .= 's';
 }
 
-// 🔹 Filtro flexible de sede/mundial
-if ($sede) {
+if ($sede !== '') {
     if (is_numeric($sede)) {
-        // Si viene como ID (por ejemplo: 3)
-        $query .= " AND p.mundial_id = ?";
-        $params[] = $sede;
+        $sql .= " AND p.mundial_id = ?";
+        $params[] = (int)$sede;
         $types .= 'i';
     } else {
-        // Si viene como texto (por búsqueda o valor manual)
-        $query .= " AND LOWER(m.nombre_comunidad) LIKE LOWER(CONCAT('%', ?, '%'))";
+        $sql .= " AND LOWER(m.nombre_comunidad) LIKE LOWER(CONCAT('%', ?, '%'))";
         $params[] = $sede;
         $types .= 's';
     }
 }
 
-// 🔹 Filtro de estado
-if (!empty($estado)) {
-    $query .= " AND UPPER(p.estatus) = ?";
+if ($estado !== '') {
+    $sql .= " AND UPPER(p.estatus) = ?";
     $params[] = strtoupper($estado);
     $types .= 's';
 } else {
-    // Si no se pasa estado, por defecto muestra solo pendientes
-    $query .= " AND UPPER(p.estatus) = 'PENDIENTE'";
+    // Por defecto: mostrar solo pendientes
+    $sql .= " AND UPPER(p.estatus) = 'PENDIENTE'";
 }
 
-
-
-// --- ORDEN ---
+// --- Orden ---
 switch ($orden) {
-    case 'antiguo': $query .= " ORDER BY p.creada_en ASC"; break;
-    case 'titulo': $query .= " ORDER BY p.titulo ASC"; break;
-    default: $query .= " ORDER BY p.creada_en DESC"; break;
+    case 'antiguo': $sql .= " ORDER BY p.creada_en ASC"; break;
+    case 'titulo':  $sql .= " ORDER BY p.titulo ASC"; break;
+    default:        $sql .= " ORDER BY p.creada_en DESC"; break;
 }
 
-// --- EJECUCIÓN ---
-$stmt = $conexion->prepare($query);
-if (!empty($params)) $stmt->bind_param($types, ...$params);
-$stmt->execute();
-$res = $stmt->get_result();
-$rows = $res->fetch_all(MYSQLI_ASSOC);
+// --- Ejecución ---
+try {
+    $stmt = $conexion->prepare($sql);
+    if (!empty($params)) $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $res  = $stmt->get_result();
+    $rows = $res->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
 
-// --- RESPUESTA ---
-echo json_encode(['ok' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    echo json_encode([
+        'ok'   => true,
+        'data' => $rows
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'ok'    => false,
+        'error' => 'Error al listar publicaciones: ' . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+}

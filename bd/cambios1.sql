@@ -141,4 +141,22 @@ ALTER TABLE publicacion
 ALTER TABLE mundial ADD COLUMN slug VARCHAR(255) AFTER portada_url;
 
 
+-- mas cambios jeje
+INSERT INTO roles (nombre)
+VALUES ('ADMIN'), ('USUARIO') AS new
+ON DUPLICATE KEY UPDATE nombre = new.nombre;
+
+INSERT INTO usuario_rol (usuario_id, rol_id)
+SELECT u.usuario_id, r.rol_id
+FROM usuarios u
+JOIN roles r ON r.nombre = 'USUARIO'
+WHERE u.usuario_id NOT IN (
+    SELECT usuario_id FROM usuario_rol
+);
+
+
+-- ejectuar el nuevo sp_insert user porque se modifico
+
+
+
 

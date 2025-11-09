@@ -1,6 +1,22 @@
 <?php
+session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../conexion.php';
+
+// ✅ Validación de sesión y rol de administrador (compatible con 'rol' o 'isAdmin')
+if (empty($_SESSION['user'])) {
+    echo json_encode(['ok' => false, 'error' => 'No autorizado - sin sesión']);
+    exit;
+}
+
+$user = $_SESSION['user'];
+$rol = strtoupper($user['rol'] ?? '');
+$esAdmin = !empty($user['isAdmin']) || $rol === 'ADMIN';
+
+if (!$esAdmin) {
+    echo json_encode(['ok' => false, 'error' => 'No autorizado - rol insuficiente']);
+    exit;
+}
 
 // Función para generar slug único
 function generarSlug($texto, $conexion) {

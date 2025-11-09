@@ -1,4 +1,3 @@
-// js/aprobaciones.js
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ aprobaciones.js listo');
 
@@ -21,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  const BASE = '/4everFootball';
+  // Ajusta según tu entorno
+  const BASE = window.BASE_PATH || '/4everFootball';
 
   // --- Snackbar pequeño ---
   let sbEl;
@@ -38,16 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       document.body.appendChild(sbEl);
     }
-    sbEl.style.background = (type === 'error') ? '#7f1d1d' : '#14532d';
+    sbEl.style.background = type === 'error' ? '#7f1d1d' : '#14532d';
     sbEl.textContent = msg;
     sbEl.style.opacity = 1;
     clearTimeout(sbEl._t);
-    sbEl._t = setTimeout(() => (sbEl.style.opacity = 0), 2200);
+    sbEl._t = setTimeout(() => (sbEl.style.opacity = 0), 2000);
   }
 
   // ======================================================================
   // Cargar filtros dinámicamente
-  // Acepta sedes como ["Sudafrica 2010", ...] o [{id: 1, nombre: "Sudafrica 2010"}, ...]
   // ======================================================================
   async function cargarFiltros() {
     try {
@@ -64,15 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         `<option value="">Todas</option>` +
         (data.categorias || []).map(c => `<option value="${c}">${c}</option>`).join('');
 
-      // Sedes (string u objeto)
+      // Sedes
       sedeSel.innerHTML = `<option value="">Todas</option>`;
       (data.sedes || []).forEach(s => {
         if (s && typeof s === 'object') {
-          // { id, nombre }
           sedeSel.insertAdjacentHTML('beforeend',
             `<option value="${s.id}">${s.nombre}</option>`);
         } else {
-          // "Sudafrica 2010"
           sedeSel.insertAdjacentHTML('beforeend',
             `<option value="${s}">${s}</option>`);
         }
@@ -121,20 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="d-none d-lg-table-cell">${pub.creada_en || '-'}</td>
         <td><span class="ff-status-badge ff-status-${String(pub.estatus || 'PENDIENTE').toLowerCase()}">${pub.estatus}</span></td>
         <td class="text-end ff-action">
-          <button class="btn btn-sm btn-outline-light ff-ver" data-id="${pub.publicacion_id}">👁️ Ver</button>
+          <button class="btn btn-sm btn-outline-light ff-ver" data-id="${pub.publicacion_id}">  Ver  </button>
         </td>
       `;
       tbody.appendChild(tr);
     });
 
-    // botón Ver por evento delegado
     tbody.querySelectorAll('.ff-ver').forEach(btn => {
       btn.addEventListener('click', () => verPreview(btn.dataset.id));
     });
   }
 
   // ======================================================================
-  // Cargar publicaciones con filtros
+  // Cargar publicaciones
   // ======================================================================
   async function cargarPublicaciones() {
     const q      = document.getElementById('q')?.value || '';
@@ -152,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const url = new URL(`${BASE}/api/publicaciones_listar.php`, location.origin);
       url.searchParams.set('q', q);
       url.searchParams.set('cat', cat);
-      url.searchParams.set('sede', sede);      // puede ser id o texto
-      url.searchParams.set('estado', estado);  // PENDIENTE/APROBADO/RECHAZADO o vacío
+      url.searchParams.set('sede', sede);
+      url.searchParams.set('estado', estado);
       url.searchParams.set('orden', orden);
 
       const res = await fetch(url);
@@ -167,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (!data.data || !data.data.length) {
+      if (!data.data?.length) {
         tbody.innerHTML = `<tr><td colspan="8" class="text-secondary text-center py-4">
           No hay publicaciones
         </td></tr>`;
@@ -184,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ======================================================================
-  // Vista previa (guarda el id en dataset)
+  // Vista previa
   // ======================================================================
   async function verPreview(id) {
     try {
@@ -193,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(url);
       const data = await res.json();
 
-      if (!data.ok || !data.data || !data.data.length) {
+      if (!data.ok || !data.data?.length) {
         snackbar('No se pudo cargar la publicación', 'error');
         return;
       }
@@ -223,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
       snackbar('Error cargando vista previa', 'error');
     }
   }
-  // Exponer para botón "Ver" renderizado
   window.verPreview = verPreview;
 
   // ======================================================================
@@ -233,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const fd = new FormData();
       fd.append('id', id);
-      fd.append('estado', estado); // PENDIENTE | APROBADO | RECHAZADO
+      fd.append('estado', estado); // PENDIENTE | APROBADA | RECHAZADA
 
       const res = await fetch(`${BASE}/api/publicacion_cambiar_estado.php`, {
         method: 'POST',
@@ -284,23 +279,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resetBtn?.addEventListener('click', () => {
     form.reset();
-    cargarFiltros();        // repinta selects
-    cargarPublicaciones();  // repinta tabla
+    cargarFiltros();
+    cargarPublicaciones();
   });
 
-  // Botones modal
   document.getElementById('modalApprove')?.addEventListener('click', () => {
     const id = modalTitle.dataset.id;
-    if (id) cambiarEstadoUno(id, 'APROBADO');
+    if (id) cambiarEstadoUno(id, 'APROBADA');
   });
   document.getElementById('modalReject')?.addEventListener('click', () => {
     const id = modalTitle.dataset.id;
-    if (id) cambiarEstadoUno(id, 'RECHAZADO');
+    if (id) cambiarEstadoUno(id, 'RECHAZADA');
   });
 
-  // Botones masivos
-  document.getElementById('bulkApprove')?.addEventListener('click', () => cambiarEstadoSeleccionados('APROBADO'));
-  document.getElementById('bulkReject')?.addEventListener('click', () => cambiarEstadoSeleccionados('RECHAZADO'));
+  document.getElementById('bulkApprove')?.addEventListener('click', () => cambiarEstadoSeleccionados('APROBADA'));
+  document.getElementById('bulkReject')?.addEventListener('click', () => cambiarEstadoSeleccionados('RECHAZADA'));
 
   // Init
   cargarFiltros();

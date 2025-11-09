@@ -2,42 +2,72 @@
 // api/comentario_add.php
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
+error_reporting(E_ALL);
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
   http_response_code(405);
-  echo json_encode(['ok'=>false,'error'=>'Método no permitido']); exit;
+  echo json_encode(['ok' => false, 'error' => 'Método no permitido']);
+  exit;
 }
 
 require_once __DIR__ . '/../conexion.php';
 
-function jerror($m, $c=400){ http_response_code($c); echo json_encode(['ok'=>false,'error'=>$m]); exit; }
+function jerror($m, $c = 400) {
+  http_response_code($c);
+  echo json_encode(['ok' => false, 'error' => $m]);
+  exit;
+}
 
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) jerror('JSON inválido');
+// 💡 Detectar si llega JSON o FormData
+if (isset($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json')) {
+  $input = json_decode(file_get_contents('php://input'), true);
+  $usuario_id = (int)($input['usuario_id'] ?? 0);
+  $publicacion_id = (int)($input['publicacion_id'] ?? 0);
+  $contenido = trim((string)($input['contenido'] ?? ''));
+  $comentario_padre_id = isset($input['comentario_padre_id']) ? (int)$input['comentario_padre_id'] : null;
+} else {
+  $usuario_id = (int)($_POST['usuario_id'] ?? 0);
+  $publicacion_id = (int)($_POST['publicacion_id'] ?? 0);
+  $contenido = trim((string)($_POST['contenido'] ?? ''));
+  $comentario_padre_id = isset($_POST['comentario_padre_id']) ? (int)$_POST['comentario_padre_id'] : null;
+}
 
-$usuario_id    = isset($input['usuario_id']) ? (int)$input['usuario_id'] : 0;
-$publicacion_id= isset($input['publicacion_id']) ? (int)$input['publicacion_id'] : 0;
-$contenido     = trim((string)($input['contenido'] ?? ''));
-
-if ($usuario_id<=0 || $publicacion_id<=0 || $contenido==='') {
+// 🧩 Validaciones básicas
+if ($usuario_id <= 0 || $publicacion_id <= 0 || $contenido === '') {
   jerror('Datos incompletos');
 }
 
-// valida FK rápidas
-$existeU = $conexion->query("SELECT 1 FROM usuarios WHERE usuario_id={$usuario_id}")->fetch_row();
-$existeP = $conexion->query("SELECT 1 FROM publicacion WHERE publicacion_id={$publicacion_id}")->fetch_row();
+// ✅ Verificar existencia de usuario y publicación
+$existeU = $conexion->query("SELECT 1 FROM usuarios WHERE usuario_id = {$usuario_id}")->fetch_row();
+$existeP = $conexion->query("SELECT 1 FROM publicacion WHERE publicacion_id = {$publicacion_id}")->fetch_row();
 if (!$existeU) jerror('Usuario no existe', 404);
 if (!$existeP) jerror('Publicación no existe', 404);
 
-// inserta comentario
-$stmt = $conexion->prepare("
-  INSERT INTO comentario (publicacion_id, usuario_id, contenido, creado_en)
-  VALUES (?, ?, ?, NOW())
-");
-$stmt->bind_param('iis', $publicacion_id, $usuario_id, $contenido);
+// Si hay comentario padre, verificar que exista y sea de la misma publicación
+if ($comentario_padre_id) {
+  $existePadre = $conexion->query("
+    SELECT 1 FROM comentario 
+    WHERE comentario_id = {$comentario_padre_id} AND publicacion_id = {$publicacion_id}
+  ")->fetch_row();
+  if (!$existePadre) jerror('Comentario padre no válido', 404);
+}
+
+// 💾 Insertar nuevo comentario
+$sql = "INSERT INTO comentario (publicacion_id, usuario_id, contenido, comentario_padre_id, creado_en)
+        VALUES (?, ?, ?, ?, NOW())";
+
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param('iisi', $publicacion_id, $usuario_id, $contenido, $comentario_padre_id);
 
 if ($stmt->execute()) {
-  echo json_encode(['ok'=>true, 'mensaje'=>'Comentario agregado', 'id'=>$stmt->insert_id]);
+  echo json_encode([
+    'ok' => true,
+    'mensaje' => 'Comentario agregado',
+    'id' => $stmt->insert_id
+  ]);
 } else {
-  jerror('No se pudo guardar el comentario');
+  jerror('No se pudo guardar el comentario: ' . $stmt->error);
 }
+
+$stmt->close();
+$conexion->close();

@@ -9,7 +9,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
   exit;
 }
 
-// Incluir la sesión global
+// Incluir la sesión global (asegura path unificado)
 require_once __DIR__ . '/../config/session_init.php';
 
 // Validar CSRF
@@ -43,7 +43,7 @@ if ($email === '' || $pass === '') {
 require_once __DIR__ . '/../conexion.php';
 
 try {
-  // Buscar usuario y rol ADMIN
+  // Buscar usuario y verificar si es admin
   $sql = "
     SELECT 
       u.usuario_id, u.nombre_completo, u.email, u.password_hash, u.activo,
@@ -94,7 +94,7 @@ try {
 // Determinar rol
 $rol = !empty($user['isAdmin']) ? 'ADMIN' : 'USER';
 
-// Guardar datos de sesión unificados
+// Guardar datos en la sesión
 $_SESSION['user'] = [
   'id'      => (int)$user['usuario_id'],
   'email'   => (string)$user['email'],
@@ -102,9 +102,19 @@ $_SESSION['user'] = [
   'rol'     => $rol
 ];
 
+// Regenerar ID de sesión por seguridad
 session_regenerate_id(true);
 
-// Respuesta
+/* 🔥 Asegurar que la cookie de sesión se guarde correctamente
+setcookie(session_name(), session_id(), [
+  'expires'  => 0,
+  'path'     => '/4everFootball', // 👈 importante: tu carpeta base
+  'secure'   => false,            // true si usas HTTPS
+  'httponly' => true,
+  'samesite' => 'Lax'
+]);*/
+
+// Respuesta final
 echo json_encode([
   'ok'   => true,
   'msg'  => 'Inicio de sesión correcto.',

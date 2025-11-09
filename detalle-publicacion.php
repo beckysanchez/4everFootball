@@ -1,407 +1,352 @@
 <?php
-  
-  $BASE = '/4everFootball';
+session_start();
+require_once(__DIR__ . '/conexion.php');
+$BASE = '/4everFootball';
+
+// --- Obtener ID ---
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($id <= 0) {
+  echo "<h2>⚠️ Publicación no encontrada.</h2>";
+  exit;
+}
+
+// --- Cargar publicación ---
+$stmt = $conexion->prepare("
+  SELECT 
+    p.*, 
+    u.nombre_completo AS autor, 
+    c.nombre AS categoria,
+    m.nombre_comunidad AS sede_nombre,
+    m.mundial_id
+  FROM publicacion p
+  JOIN usuarios u ON u.usuario_id = p.usuario_id
+  JOIN categoria c ON c.categoria_id = p.categoria_id
+  JOIN mundial m ON m.mundial_id = p.mundial_id
+  WHERE p.publicacion_id = ?
+  LIMIT 1
+");
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$pub = $result->fetch_assoc();
+$stmt->close();
+
+if (!$pub) {
+  echo "<h2>❌ Publicación no encontrada.</h2>";
+  exit;
+}
+
+// --- Variables limpias ---
+$titulo      = htmlspecialchars($pub['titulo']);
+$descripcion = nl2br(htmlspecialchars($pub['descripcion']));
+$categoria   = htmlspecialchars($pub['categoria']);
+$autor       = htmlspecialchars($pub['autor']);
+$fecha       = date('d/m/Y', strtotime($pub['creada_en']));
+$estado      = htmlspecialchars($pub['estatus']);
+$media       = htmlspecialchars($pub['media_url']);
+$tipo_media  = $pub['tipo_media'];
+$sede_nombre = htmlspecialchars($pub['sede_nombre']);
+$sede_slug   = strtolower(str_replace(' ', '-', $sede_nombre));
+$likesFake   = rand(50, 900);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Publicación | 4everFootball</title>
+  <title><?= $titulo ?> | 4everFootball</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  
-  <link rel="stylesheet" href="<?= $BASE ?>/css/index.css?v=41">
+  <link rel="stylesheet" href="<?= $BASE ?>/css/index.css?v=<?= time() ?>">
 </head>
 <body class="ff-bg">
 
-  <header id="siteHeader" class="ff-header sticky-top">
-    <div class="container d-flex align-items-center gap-3 py-2">
-      <a href="<?= $BASE ?>/index.php" class="d-flex align-items-center gap-2 text-decoration-none">
-        <img src="<?= $BASE ?>/img/logo.svg" alt="4everFootball" style="height:34px">
-      </a>
+<header id="siteHeader" class="ff-header sticky-top">
+  <div class="container d-flex align-items-center gap-3 py-2">
+    <a href="<?= $BASE ?>/index.php" class="d-flex align-items-center gap-2 text-decoration-none">
+      <img src="<?= $BASE ?>/img/logo.svg" alt="4everFootball" style="height:34px">
+    </a>
+    <form id="headerSearch" class="ms-auto me-auto w-50 d-flex" role="search">
+      <div class="input-group ff-search w-100">
+        <span class="input-group-text">🔎</span>
+        <input id="qHeader" type="search" class="form-control" placeholder="Buscar en 4everFootball…">
+      </div>
+    </form>
+    <nav class="d-flex align-items-center gap-2">
+      <button id="publishBtn" class="btn btn-register" type="button">Publicar</button>
+      <div class="ff-profile position-relative">
+        <button id="profileBtn" class="ff-avatar-btn" type="button">
+          <img src="<?= $BASE ?>/img/icon_iniciarsesion.png?v=1"
+               alt="Perfil" class="ff-avatar-img" width="36" height="36">
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
 
-      
-      <form id="headerSearch" class="ms-auto me-auto w-50 d-flex" role="search" novalidate>
-        <div class="input-group ff-search w-100">
-          <span class="input-group-text">🔎</span>
-          <input id="qHeader" type="search" class="form-control" placeholder="Buscar en 4everFootball…">
-        </div>
-      </form>
+<main class="container py-4 pb-5">
 
-      <nav class="d-flex align-items-center gap-2">
-        <button id="publishBtn" class="btn btn-register" type="button">Publicar</button>
-
- 
-        <div class="ff-profile position-relative">
-          <button id="profileBtn" class="ff-avatar-btn" type="button"
-                  aria-haspopup="true" aria-expanded="false"
-                  aria-controls="profileMenu" title="Cuenta">
-            <img src="<?= $BASE ?>/img/icon_iniciarsesion.png?v=1"
-                 alt="Perfil" class="ff-avatar-img" width="36" height="36"
-                 decoding="async" loading="lazy"
-                 onerror="this.style.visibility='hidden';this.parentElement.classList.add('ff-avatar-fallback');" />
-          </button>
-          <div id="profileMenu" class="ff-dropdown" role="menu" aria-labelledby="profileBtn"></div>
-        </div>
-      </nav>
-    </div>
-  </header>
-
-
-  <main class="container py-4 pb-5">
-
-    <article id="post" class="ff-post mb-4">
-      <div class="ff-post-header">
-        <div class="ff-post-meta">
-          <div class="ff-avatar"></div>
-          <div>
-            <div class="d-flex align-items-center gap-2">
-              <strong id="postTitle">Título de la publicación</strong>
-              <span id="postState" class="ff-chip">Aprobado</span>
-            </div>
-            <div class="ff-post-sub" id="postMeta">Sede · Fecha</div>
+  <article id="post" class="ff-post mb-4">
+    <div class="ff-post-header">
+      <div class="ff-post-meta">
+        <div class="ff-avatar"></div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <strong id="postTitle"><?= $titulo ?></strong>
+            <span id="postState" class="ff-chip"><?= ucfirst(strtolower($estado)) ?></span>
+          </div>
+          <div class="ff-post-sub">
+            <a class="ff-group-link-mini" href="<?= $BASE ?>/sede.php?slug=<?= urlencode($sede_slug) ?>">
+              <?= $sede_nombre ?>
+            </a>
+            · <?= $fecha ?> · <?= $autor ?>
           </div>
         </div>
-        <span id="postCat" class="ff-chip text-uppercase">CATEGORÍA</span>
       </div>
+      <span id="postCat" class="ff-chip text-uppercase"><?= $categoria ?></span>
+    </div>
 
-      <div id="postMedia" class="ff-post-media ff-empty"></div>
+    <div id="postMedia" class="ff-post-media mt-3">
+      <?php if ($tipo_media === 'IMAGEN' && $media): ?>
+        <img src="<?= $media ?>" alt="<?= $titulo ?>" class="img-fluid rounded">
+      <?php elseif ($tipo_media === 'VIDEO' && $media): ?>
+        <video src="<?= $media ?>" controls class="w-100 rounded"></video>
+      <?php endif; ?>
+    </div>
 
-      <div class="ff-actions">
-        <button id="likeBtn" class="btn btn-outline-light">👍 <span id="likeCount">0</span></button>
-        <a class="btn btn-login" href="#comments">Comentar</a>
+    <div class="ff-actions mt-3">
+      <button id="likeBtn" class="btn btn-outline-light">👍 <span id="likeCount"><?= $likesFake ?></span></button>
+      <a class="btn btn-login" href="#comments">Comentar</a>
+    </div>
+  </article>
+
+  <section class="glass-card p-3 p-md-4 mb-4">
+    <h2 class="h5 text-white mb-2">Descripción</h2>
+    <p class="mb-0 text-secondary"><?= $descripcion ?></p>
+  </section>
+
+  <section id="comments" class="glass-card p-3 p-md-4">
+    <h2 class="h5 text-white mb-3">Comentarios</h2>
+
+    <div id="commentList" class="d-flex flex-column gap-3 mb-3"></div>
+
+    <div id="cmtMsg" class="small mb-3" role="alert" aria-live="polite"></div>
+
+    <form id="cmtForm" class="row g-2" novalidate>
+      <div class="col-12">
+        <label for="cmtText" class="form-label">Escribe un comentario</label>
+        <textarea id="cmtText" class="form-control" rows="3" required minlength="2" maxlength="500" placeholder="Sé respetuoso y aporta al tema…"></textarea>
+        <div class="invalid-feedback">El comentario debe tener al menos 2 caracteres.</div>
       </div>
-    </article>
+      <div class="col-12 d-flex justify-content-end">
+        <button type="submit" class="btn btn-login">Publicar comentario</button>
+      </div>
+    </form>
+  </section>
+</main>
 
-    <section class="glass-card p-3 p-md-4 mb-4">
-      <h2 class="h5 text-white mb-2">Descripción</h2>
-      <p id="postDesc" class="mb-0 text-secondary"></p>
-    </section>
 
-    <section id="comments" class="glass-card p-3 p-md-4">
-      <h2 class="h5 text-white mb-3">Comentarios</h2>
+<script>
+const BASE = '<?= $BASE ?>';
 
-      <div id="commentList" class="d-flex flex-column gap-3 mb-3"></div>
+// Obtén el usuario actual (almacenado al iniciar sesión)
+const user = JSON.parse(localStorage.getItem('ff_user') || 'null');
 
-      <div id="cmtMsg" class="small mb-3" role="alert" aria-live="polite"></div>
+// Obtén el ID de la publicación desde la URL (?id=9)
+const params = new URLSearchParams(window.location.search);
+const publicacion_id = parseInt(params.get('id'));
 
-      <form id="cmtForm" class="row g-2" novalidate>
-        <div class="col-12">
-          <label for="cmtText" class="form-label">Escribe un comentario</label>
-          <textarea id="cmtText" class="form-control" rows="3" required minlength="2" maxlength="500" placeholder="Sé respetuoso y aporta al tema…"></textarea>
-          <div class="invalid-feedback">El comentario debe tener al menos 2 caracteres.</div>
+// Contenedor principal de comentarios
+const list = document.getElementById('commentList');
+const form = document.getElementById('cmtForm');
+const textarea = document.getElementById('cmtText');
+
+// 🧩 --- 1. FUNCIÓN PARA CARGAR COMENTARIOS DESDE EL SERVIDOR ---
+async function cargarComentarios() {
+  try {
+    const res = await fetch(`${BASE}/api/comentarios_listar.php?publicacion_id=${publicacion_id}`);
+    const data = await res.json();
+    if (data.ok) {
+      renderComentarios(data.comentarios);
+    } else {
+      list.innerHTML = `<p class='text-secondary'>No hay comentarios.</p>`;
+    }
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = `<p class='text-danger'>Error al cargar comentarios.</p>`;
+  }
+}
+
+// 🧩 --- 2. FUNCIÓN PARA RENDERIZAR TODOS LOS COMENTARIOS ---
+function renderComentarios(comentarios) {
+  list.innerHTML = comentarios.map(renderComentarioHTML).join('');
+}
+
+// 🧩 --- 3. FUNCIÓN PARA CONSTRUIR EL HTML DE CADA COMENTARIO ---
+function renderComentarioHTML(c) {
+  const liked = c.likedByMe ?? false;
+  const esAdmin = user?.rol === 'ADMIN';
+
+  const eliminado = c.eliminado == 1;
+
+  // Si el comentario está eliminado, reemplazamos el texto
+  const contenido = eliminado
+    ? `<i class="text-secondary small">Este comentario fue eliminado por un administrador.</i>`
+    : escapeHTML(c.contenido);
+
+  // Foto de perfil (si el usuario tiene o un ícono genérico)
+  const foto = c.foto
+    ? `<img src="${c.foto}" width="36" height="36" class="rounded-circle">`
+    : `<img src="${BASE}/img/icon_iniciarsesion.png" width="36" height="36" class="rounded-circle">`;
+
+  // Hijo (respuesta) recursivo
+  const hijos = c.hijos && c.hijos.length
+    ? `<div class="mt-3 ps-4 border-start border-secondary">${c.hijos.map(renderComentarioHTML).join('')}</div>`
+    : '';
+
+  return `
+  <div class="cmt mb-3" data-id="${c.comentario_id}">
+    <div class="d-flex gap-2">
+      ${foto}
+      <div class="flex-grow-1">
+        <strong>${escapeHTML(c.autor)}</strong>
+        <div class="small text-secondary">${new Date(c.creado_en).toLocaleDateString()}</div>
+        <p class="mb-2">${contenido}</p>
+
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn btn-sm ${liked ? 'btn-login' : 'btn-outline-light'} c-like" data-id="${c.comentario_id}">
+            👍 <span>${c.likes || 0}</span>
+          </button>
+          <button class="btn btn-sm btn-outline-light c-reply" data-id="${c.comentario_id}">Responder</button>
+          ${esAdmin ? `
+            <div class="dropdown d-inline">
+              <button class="btn btn-sm btn-outline-danger dropdown-toggle" data-bs-toggle="dropdown">⋮</button>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><button class="dropdown-item c-del" data-id="${c.comentario_id}">Eliminar</button></li>
+              </ul>
+            </div>` : ''}
         </div>
-        <div class="col-12 d-flex justify-content-end">
-          <button type="submit" class="btn btn-login">Publicar comentario</button>
+
+        <!-- Caja de respuesta (oculta al inicio) -->
+        <div class="mt-2 d-none c-replybox" id="replybox-${c.comentario_id}">
+          <textarea class="form-control form-control-sm c-replytext" rows="2" maxlength="300" placeholder="Tu respuesta…"></textarea>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button class="btn btn-outline-light btn-sm c-cancel-reply" data-id="${c.comentario_id}">Cancelar</button>
+            <button class="btn btn-login btn-sm c-send-reply" data-id="${c.comentario_id}">Responder</button>
+          </div>
         </div>
-      </form>
-    </section>
-  </main>
 
-  <script>
-    const BASE = '<?= $BASE ?>';
+        ${hijos}
+      </div>
+    </div>
+  </div>`;
+}
 
-    const GROUPS = [
-      { slug:'qatar-2022',  nombre:'Qatar 2022',        img:`${BASE}/img/2022.png` },
-      { slug:'rusia-2018',  nombre:'Rusia 2018',        img:`${BASE}/img/2018.png` },
-      { slug:'brasil-2014', nombre:'Brasil 2014',       img:`${BASE}/img/2014.png` },
-      { slug:'sudafrica-2010', nombre:'Sudáfrica 2010', img:`${BASE}/img/2010.png` },
-      { slug:'alemania-2006',  nombre:'Alemania 2006',  img:`${BASE}/img/2006.png` },
-      { slug:'corea-japon-2002', nombre:'Corea/Japón 2002', img:`${BASE}/img/2002.png` },
-    ];
-    const GROUP_MAP = GROUPS.reduce((a,g)=>{ a[g.slug]=g; return a; }, {});
+// 🧩 --- 4. ESCAPAR TEXTO PARA EVITAR INYECCIONES ---
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, s => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[s]));
+}
 
-    function getUser(){ try { return JSON.parse(localStorage.getItem('ff_user')||'null'); } catch { return null; } }
-    function goEstado(type,title,msg,primary,secondary){
-      const u = new URL(`${BASE}/estado.php`, location.origin);
-      u.searchParams.set('type', type);
-      u.searchParams.set('title', title);
-      u.searchParams.set('msg', msg);
-      if (primary)   u.searchParams.set('primary', primary);
-      if (secondary) u.searchParams.set('secondary', secondary);
-      location.href = u.toString();
-    }
-    function requireAuth({title='Necesitas iniciar sesión', msg='Para continuar debes iniciar sesión o crear una cuenta.'}={}) {
-      const u = getUser(); if (u) return true;
-      goEstado('warning', title, msg, `Iniciar sesión:${BASE}/login.php`, `Crear cuenta:${BASE}/register.php`);
-      return false;
-    }
+// 🧩 --- 5. PUBLICAR NUEVO COMENTARIO ---
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const contenido = textarea.value.trim();
+  if (!contenido) return alert('El comentario no puede estar vacío.');
 
+  if (!user) return alert('Debes iniciar sesión para comentar.');
 
-    function buildProfileMenu(){
-      const u = getUser();
-      const menu = document.getElementById('profileMenu');
-      let html = '';
-      if (!u){
-        html += `<a class="ff-dropdown-item" href="${BASE}/login.php">Iniciar sesión</a>`;
-        html += `<a class="ff-dropdown-item" href="${BASE}/register.php">Crear cuenta</a>`;
-      } else {
-        html += `<div class="ff-dropdown-item ff-user-greet">Hola, ${u.name || u.email}</div>`;
-        html += `<a class="ff-dropdown-item" href="${BASE}/perfil.php">Mi perfil</a>`;
-        html += `<a class="ff-dropdown-item" href="${BASE}/mispublicaciones.php">Mis posts</a>`;
-        if (u.isAdmin){
-          html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Panel de admin</a>`;
-          html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
-        }
-        html += `<button class="ff-dropdown-item logout text-start" id="logoutBtn" type="button">Cerrar sesión</button>`;
-      }
-      menu.innerHTML = html;
-      document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ localStorage.removeItem('ff_user'); location.href=`${BASE}/index.php`; });
-    }
-    buildProfileMenu();
+  const body = {
+    usuario_id: user.id,
+    publicacion_id,
+    contenido
+  };
 
-    // Dropdown
-    const btn = document.getElementById('profileBtn');
-    const menu= document.getElementById('profileMenu');
-    btn.addEventListener('click', ()=>{ const open = menu.classList.toggle('show'); btn.setAttribute('aria-expanded', String(open)); });
-    document.addEventListener('click', (e)=>{ if (!menu.contains(e.target) && !btn.contains(e.target)){ menu.classList.remove('show'); btn.setAttribute('aria-expanded','false'); } });
+  const res = await fetch(`${BASE}/api/comentario_add.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
 
+  const data = await res.json();
+  if (data.ok) {
+    textarea.value = '';
+    cargarComentarios(); // recarga la lista
+  } else {
+    alert('❌ Error: ' + data.error);
+  }
+});
 
-    document.getElementById('publishBtn').addEventListener('click', ()=>{
-      if (!requireAuth({title:'Necesitas iniciar sesión', msg:'Para publicar contenido debes iniciar sesión o crear una cuenta.'})) return;
-      location.href = `${BASE}/crear-publicacion.php`;
-    });
+// 🧩 --- 6. MANEJO DE BOTONES (LIKE, RESPONDER, ELIMINAR) ---
+list.addEventListener('click', async e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = parseInt(btn.dataset.id);
 
-    // sonseadas de jairo
-    const POST = {
-      id: 2,
-      titulo: 'Entrevista al crack 2014',
-      categoria: 'entrevistas',
-      sedeNombre: 'Brasil 2014',
-      sedeSlug: 'brasil-2014',
-      fecha: '2014-07-10',
-      estado: 'aprobado',
-      likes: 120,
-      mediaType: 'video',
-      src: `${BASE}/img/sample2.mp4`,
-      poster: `${BASE}/img/poster2.jpg`,
-      desc: 'Conversación exclusiva con el delantero después del partido decisivo.'
+  // --- Dar like ---
+  if (btn.classList.contains('c-like')) {
+    if (!user) return alert('Debes iniciar sesión para dar like.');
+    const fd = new FormData();
+    fd.append('comentario_id', id);
+    fd.append('usuario_id', user.id);
+    const res = await fetch(`${BASE}/api/comentario_like.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.ok) cargarComentarios();
+  }
+
+  // --- Mostrar caja de respuesta ---
+  if (btn.classList.contains('c-reply')) {
+    if (!user) return alert('Debes iniciar sesión para responder.');
+    document.getElementById(`replybox-${id}`)?.classList.toggle('d-none');
+  }
+
+  // --- Cancelar respuesta ---
+  if (btn.classList.contains('c-cancel-reply')) {
+    document.getElementById(`replybox-${id}`)?.classList.add('d-none');
+  }
+
+  // --- Enviar respuesta ---
+  if (btn.classList.contains('c-send-reply')) {
+    const box = document.getElementById(`replybox-${id}`);
+    const txt = box.querySelector('.c-replytext').value.trim();
+    if (!txt) return alert('No puedes enviar un comentario vacío.');
+
+    const body = {
+      usuario_id: user.id,
+      publicacion_id,
+      contenido: txt,
+      comentario_padre_id: id
     };
 
-    
-    const COMMENTS = [
-      { id:1, user:'Ana',  text:'¡Tremenda entrevista! Se nota la emoción.', ts:'2024-08-01', likes:3, replies:[] },
-      { id:2, user:'Luis', text:'Me gustó cuando habló de su preparación física.', ts:'2024-08-02', likes:0, replies:[] },
-    ];
-    let nextCmtId = (Math.max(0, ...collectIds(COMMENTS)) || 0) + 1;
-    function collectIds(arr){ const out=[]; (function rec(a){ a.forEach(c=>{ out.push(c.id); if(c.replies?.length) rec(c.replies); }); })(arr); return out; }
-
-   
-    function renderPost(){
-      document.getElementById('postTitle').textContent = POST.titulo;
-      document.getElementById('postCat').textContent = POST.categoria.toUpperCase();
-      document.getElementById('postState').textContent = POST.estado==='aprobado' ? 'Aprobado' : 'En revisión';
-      document.getElementById('postDesc').textContent = POST.desc || '';
-      document.getElementById('likeCount').textContent = POST.likes;
-
-      // Meta con link a sede
-      const meta = document.getElementById('postMeta');
-      meta.innerHTML = `
-        <a class="ff-group-link-mini" href="${BASE}/sede.php?slug=${encodeURIComponent(POST.sedeSlug)}" title="Ver ${POST.sedeNombre}">
-          ${POST.sedeNombre}
-        </a>
-        · ${new Date(POST.fecha).toLocaleDateString()}
-      `;
-
-      const g = GROUP_MAP[POST.sedeSlug];
-      const av = document.querySelector('.ff-post .ff-avatar');
-      av.innerHTML = g && g.img ? `<img src="${g.img}" alt="${g?.nombre || 'Sede'}" onerror="this.remove()">` : '';
-
-    
-      const media = document.getElementById('postMedia');
-      media.classList.remove('ff-empty'); media.innerHTML='';
-      if (!POST.src){ media.classList.add('ff-empty'); }
-      else if (POST.mediaType==='video'){
-        media.innerHTML = `<video src="${POST.src}" ${POST.poster?`poster="${POST.poster}"`:''} controls playsinline></video>`;
-      } else {
-        media.innerHTML = `<img src="${POST.src}" alt="${POST.titulo}" onerror="this.closest('.ff-post-media').classList.add('ff-empty'); this.remove();">`;
-      }
-    }
-
-    document.getElementById('likeBtn').addEventListener('click', ()=>{
-      if (!requireAuth({title:'Necesitas iniciar sesión', msg:'Para dar like debes iniciar sesión o crear una cuenta.'})) return;
-      const span = document.getElementById('likeCount');
-      span.textContent = parseInt(span.textContent,10)+1;
+    const res = await fetch(`${BASE}/api/comentario_add.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
 
-    
-    const LIKE_KEY = `ff_cmt_likes_${POST.id}`;
-    function getLikedSet(){
-      try{ return new Set(JSON.parse(localStorage.getItem(LIKE_KEY) || '[]')); }catch{ return new Set(); }
-    }
-    function saveLikedSet(set){
-      try{ localStorage.setItem(LIKE_KEY, JSON.stringify(Array.from(set))); }catch{}
-    }
-    let likedByMe = getLikedSet();
+    const data = await res.json();
+    if (data.ok) cargarComentarios();
+  }
 
-    const list = document.getElementById('commentList');
+  // --- Eliminar comentario (solo admin) ---
+  if (btn.classList.contains('c-del')) {
+    if (!confirm('¿Seguro que quieres eliminar este comentario?')) return;
+    const fd = new FormData();
+    fd.append('comentario_id', id);
+    const res = await fetch(`${BASE}/api/comentario_eliminar.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.ok) cargarComentarios();
+  }
+});
 
-    function renderComments(){
-      list.innerHTML = COMMENTS.map(c => renderCommentHTML(c)).join('');
-    }
+// 🧩 --- 7. CARGA INICIAL ---
+cargarComentarios();
+</script>
 
-    function renderCommentHTML(c){
-      const liked = likedByMe.has(c.id);
-      const children = (c.replies && c.replies.length)
-        ? `<div class="ms-4 ps-3 border-start border-secondary-subtle mt-3">${c.replies.map(r => renderCommentHTML(r)).join('')}</div>`
-        : '';
 
-      const isAdmin = !!getUser()?.isAdmin;
-      const delBtn = isAdmin ? `<button class="btn btn-outline-light btn-sm text-danger c-del" data-id="${c.id}">Eliminar</button>` : '';
 
-      return `
-        <div class="cmt" data-id="${c.id}">
-          <div class="d-flex gap-2">
-            <div class="ff-avatar-sm"></div>
-            <div class="flex-grow-1">
-              <strong class="text-white">${escapeHTML(c.user)}</strong>
-              <div class="text-secondary small">${new Date(c.ts).toLocaleDateString()}</div>
-              <p class="mb-2">${escapeHTML(c.text)}</p>
 
-              <div class="d-flex flex-wrap gap-1">
-                <button class="btn ${liked ? 'btn-login' : 'btn-outline-light'} btn-sm c-like" data-id="${c.id}" aria-pressed="${liked}">
-                  👍 <span class="c-like-count">${c.likes || 0}</span>
-                </button>
-                <button class="btn btn-outline-light btn-sm c-reply" data-id="${c.id}">Responder</button>
-                ${delBtn}
-              </div>
-
-              <div class="mt-2 d-none c-replybox" id="replybox-${c.id}">
-                <textarea class="form-control form-control-sm c-replytext" rows="2" maxlength="300" placeholder="Tu respuesta…"></textarea>
-                <div class="d-flex justify-content-end gap-2 mt-2">
-                  <button class="btn btn-outline-light btn-sm c-cancel-reply" data-id="${c.id}">Cancelar</button>
-                  <button class="btn btn-login btn-sm c-send-reply" data-id="${c.id}">Responder</button>
-                </div>
-              </div>
-
-              ${children}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function escapeHTML(s){ return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-
-    
-    function findCommentById(id, arr=COMMENTS){
-      for (let i=0;i<arr.length;i++){
-        const c = arr[i];
-        if (c.id === id) return { parent: arr, index: i, node: c };
-        if (c.replies && c.replies.length){
-          const r = findCommentById(id, c.replies);
-          if (r) return r;
-        }
-      }
-      return null;
-    }
-
-    list.addEventListener('click', (e)=>{
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      const id = parseInt(btn.dataset.id, 10);
-      if (!id) return;
-
-      
-      if (btn.classList.contains('c-reply')) {
-        if (!requireAuth({title:'Necesitas iniciar sesión', msg:'Para responder debes iniciar sesión o crear una cuenta.'})) return;
-        const box = document.getElementById(`replybox-${id}`);
-        box?.classList.toggle('d-none');
-        return;
-      }
-
-      if (btn.classList.contains('c-cancel-reply')) {
-        document.getElementById(`replybox-${id}`)?.classList.add('d-none');
-        return;
-      }
-
-      if (btn.classList.contains('c-send-reply')) {
-        if (!requireAuth({title:'Necesitas iniciar sesión', msg:'Para responder debes iniciar sesión o crear una cuenta.'})) return;
-        const box = document.getElementById(`replybox-${id}`);
-        const txt = box?.querySelector('.c-replytext');
-        const val = (txt?.value || '').trim();
-        if (!val) { txt?.classList.add('is-invalid'); return; }
-        txt?.classList.remove('is-invalid');
-
-        const u = getUser();
-        const found = findCommentById(id);
-        if (!found) return;
-        found.node.replies = found.node.replies || [];
-        found.node.replies.push({
-          id: nextCmtId++,
-          user: u?.name || u?.email || 'Tú',
-          text: val,
-          ts: new Date().toISOString(),
-          likes: 0,
-          replies: []
-        });
-        txt.value = '';
-        box?.classList.add('d-none');
-        renderComments();
-        showMsg('Respuesta publicada (simulación).', 'success');
-        return;
-      }
-
-      if (btn.classList.contains('c-del')) {
-        const u = getUser();
-        if (!u?.isAdmin) return;
-        const found = findCommentById(id);
-        if (!found) return;
-      
-        found.parent.splice(found.index, 1);
-        
-        likedByMe.delete(id); saveLikedSet(likedByMe);
-        renderComments();
-        showMsg('Comentario eliminado (simulación).', 'success');
-        return;
-      }
-    });
-
-    
-    const cmtForm = document.getElementById('cmtForm');
-    const cmtText = document.getElementById('cmtText');
-    const cmtMsg  = document.getElementById('cmtMsg');
-
-    function showMsg(text, type='danger'){
-      cmtMsg.className = `alert alert-${type} small`;
-      cmtMsg.textContent = text;
-    }
-    function clearMsg(){ cmtMsg.className='small mb-3'; cmtMsg.textContent=''; }
-
-    cmtForm.addEventListener('submit', (e)=>{
-      e.preventDefault();
-      clearMsg();
-
-      if (!requireAuth({title:'Necesitas iniciar sesión', msg:'Para comentar debes iniciar sesión o crear una cuenta.'})) return;
-
-      if (!cmtText.checkValidity()){
-        cmtText.classList.add('is-invalid');
-        showMsg('Corrige tu comentario.');
-        return;
-      }
-      cmtText.classList.remove('is-invalid');
-
-      const u = getUser();
-      COMMENTS.unshift({
-        id: nextCmtId++,
-        user: u?.name || u?.email || 'Tú',
-        text: cmtText.value.trim(),
-        ts: new Date().toISOString(),
-        likes: 0,
-        replies: []
-      });
-      cmtText.value='';
-      renderComments();
-      showMsg('Comentario publicado (simulación).', 'success');
-    });
-    cmtText.addEventListener('input', ()=> cmtText.classList.remove('is-invalid'));
-
- 
-    renderPost();
-    renderComments();
-  </script>
 </body>
 </html>

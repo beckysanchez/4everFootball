@@ -1,3 +1,14 @@
+<?php
+declare(strict_types=1);
+
+// ✅ Protección de sesión y acceso
+require_once __DIR__ . '/config/auth_guard.php';
+require_role('ADMIN');
+
+// Base para rutas
+$BASE = '/4everFootball';
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,7 +17,7 @@
   <title>Panel de aprobaciones | 4everFootball</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="./css/styles.css?v=31">
+  <link rel="stylesheet" href="<?= $BASE ?>/css/styles.css?v=31">
 
   <style>
     /* Ajustes puntuales para tabla y modal */
@@ -21,50 +32,44 @@
     .ff-modal-media img, .ff-modal-media video{ width:100%; height:100%; object-fit:cover; display:block; }
     .ff-modal-media.ff-empty{ background:linear-gradient(135deg,#0b1220 0%, #151e36 100%); }
     .ff-modal-media.ff-empty::after{ content:"Sin imagen/vídeo"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-weight:600; }
-  
-  #snackbar {
-  visibility: hidden;
-  min-width: 260px;
-  background-color: #222;
-  color: #fff;
-  text-align: center;
-  border-radius: 12px;
-  padding: 14px;
-  position: fixed;
-  left: 50%;
-  bottom: 40px;
-  transform: translateX(-50%);
-  z-index: 9999;
-  font-weight: 500;
-  opacity: 0;
-  transition: all 0.4s ease;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-}
 
-#snackbar.show {
-  visibility: visible;
-  opacity: 1;
-  bottom: 60px;
-}
+    #snackbar {
+      visibility: hidden;
+      min-width: 260px;
+      background-color: #222;
+      color: #fff;
+      text-align: center;
+      border-radius: 12px;
+      padding: 14px;
+      position: fixed;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      z-index: 9999;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.4s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
 
-#snackbar.success {
-  background-color: #2ecc71;
-}
+    #snackbar.show {
+      visibility: visible;
+      opacity: 1;
+      bottom: 60px;
+    }
 
-#snackbar.error {
-  background-color: #e74c3c;
-}
-
-  
+    #snackbar.success { background-color: #2ecc71; }
+    #snackbar.error { background-color: #e74c3c; }
   </style>
 </head>
+
 <body class="ff-bg">
 
   <!-- HEADER sticky -->
   <header id="siteHeader" class="ff-header sticky-top">
     <div class="container d-flex align-items-center gap-3 py-2">
-      <a href="index.php" class="d-flex align-items-center gap-2 text-decoration-none">
-        <img src="img/logo.svg" alt="4everFootball" style="height:34px">
+      <a href="<?= $BASE ?>/index.php" class="d-flex align-items-center gap-2 text-decoration-none">
+        <img src="<?= $BASE ?>/img/logo.svg" alt="4everFootball" style="height:34px">
       </a>
 
       <form class="ms-auto me-auto w-50 d-none d-md-flex" role="search">
@@ -74,7 +79,9 @@
         </div>
       </form>
 
-    
+      <div>
+        <a href="<?= $BASE ?>/logout.php" class="btn btn-outline-light btn-sm">Cerrar sesión</a>
+      </div>
     </div>
   </header>
 
@@ -83,14 +90,12 @@
     <section class="glass-card p-3 p-md-4 mb-3">
       <div class="d-flex justify-content-between align-items-center">
         <h1 class="ff-title mb-0">Panel de aprobaciones</h1>
-        
       </div>
     </section>
 
-   
     <div id="adminMsg" class="small mb-3" role="alert" aria-live="polite"></div>
 
-    
+    <!-- FILTROS -->
     <section class="glass-card p-3 p-md-4 mb-3">
       <form id="filterForm" class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
@@ -149,7 +154,7 @@
       </form>
     </section>
 
-    <!-- Tabla -->
+    <!-- TABLA -->
     <section class="glass-card p-0">
       <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-0 ff-table">
@@ -166,7 +171,7 @@
             </tr>
           </thead>
           <tbody id="tbody">
-            <!-- Rows por JS -->
+            <!-- Rows generadas por JS -->
           </tbody>
         </table>
       </div>
@@ -187,7 +192,7 @@
 
   </main>
 
-  <!-- Modal vista previa -->
+  <!-- MODAL -->
   <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content bg-dark text-white border border-light-subtle">
@@ -214,11 +219,12 @@
       </div>
     </div>
   </div>
-  <!-- Snackbar de notificación -->
-<div id="snackbar"></div>
+
+  <!-- Snackbar -->
+  <div id="snackbar"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
- <script src="js/aprobaciones.js"></script>
+  <script src="<?= $BASE ?>/js/aprobaciones.js"></script>
 
 </body>
 </html>

@@ -147,6 +147,8 @@ SELECT * FROM usuarios;
 SELECT * FROM mundial;
 SELECT * FROM pais;
 
+
+
 SELECT u.usuario_id, u.email, r.nombre AS rol
 FROM usuarios u
 LEFT JOIN usuario_rol ur ON ur.usuario_id = u.usuario_id
@@ -165,5 +167,20 @@ SELECT publicacion_id, titulo, estatus FROM publicacion WHERE estatus = 'PENDIEN
 
 DESCRIBE mundial;
 DESCRIBE publicacion;
+
+UPDATE publicacion
+SET estatus = 'PENDIENTE',
+    aprobada_en = NULL,
+    aprobada_por = NULL
+WHERE estatus = 'APROBADA';
+
+UPDATE publicacion
+SET estatus = 'PENDIENTE',
+    aprobada_en = NULL,
+    aprobada_por = NULL
+WHERE estatus = 'RECHAZADA';  
+
+SELECT * FROM comentario ORDER BY creado_en DESC;
+
 
 

@@ -1,10 +1,11 @@
 <?php
 session_start();
 $BASE = '/4everFootball';
-if (!isset($_SESSION['user']) || !$_SESSION['user']['isAdmin']) {
+if (!isset($_SESSION['user']) || ($_SESSION['user']['rol'] ?? '') !== 'ADMIN') {
   header("Location: index.php");
   exit;
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

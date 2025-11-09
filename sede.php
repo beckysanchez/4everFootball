@@ -106,27 +106,90 @@ $publicaciones = $pubStmt->get_result()->fetch_all(MYSQLI_ASSOC);
       </div>
     <?php else: ?>
       <?php foreach ($publicaciones as $p): ?>
-        <article class="glass-card p-3 p-md-4 my-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
+        <article class="glass-card p-3 p-md-4 my-3 position-relative">
+
+          <!-- Cabecera -->
+          <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
-              <strong><?= htmlspecialchars($p['titulo']) ?></strong><br>
-              <small class="text-secondary"><?= htmlspecialchars($p['autor']) ?> · <?= htmlspecialchars($p['categoria']) ?></small>
+              <strong class="d-block"><?= htmlspecialchars($p['titulo']) ?></strong>
+              <small class="text-secondary">
+                <?= htmlspecialchars($p['autor']) ?> · 
+                <?= htmlspecialchars($p['categoria']) ?> · 
+                <?= date('d/m/Y', strtotime($p['creada_en'])) ?>
+              </small>
             </div>
-            <span class="badge bg-success">Aprobado</span>
+
+            <?php if (!empty($_SESSION['user']) && $_SESSION['user']['rol'] === 'ADMIN'): ?>
+              <!-- Menú admin con tres puntos -->
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  ⋮
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                  <li><button class="dropdown-item" onclick="cambiarEstado(<?= $p['publicacion_id'] ?>, 'PENDIENTE')">Marcar como pendiente</button></li>
+                  <li><button class="dropdown-item" onclick="cambiarEstado(<?= $p['publicacion_id'] ?>, 'RECHAZADA')">Rechazar publicación</button></li>
+                </ul>
+              </div>
+            <?php endif; ?>
           </div>
 
+          <!-- Imagen o video -->
           <?php if ($p['tipo_media'] === 'IMAGEN' && $p['media_url']): ?>
             <img src="<?= htmlspecialchars($p['media_url']) ?>" alt="Imagen de publicación" class="img-fluid rounded mb-3">
+          <?php elseif ($p['tipo_media'] === 'VIDEO' && $p['media_url']): ?>
+            <video src="<?= htmlspecialchars($p['media_url']) ?>" controls class="w-100 rounded mb-3"></video>
           <?php endif; ?>
 
+          <!-- Descripción -->
           <p><?= nl2br(htmlspecialchars($p['descripcion'])) ?></p>
-          <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $p['publicacion_id'] ?>" class="btn btn-sm btn-login">Ver más</a>
+
+          <!-- Acciones -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-light">
+                👍 <?= rand(50, 999) // temporal, luego se conecta a tabla reaccion ?>
+              </button>
+              <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $p['publicacion_id'] ?>" class="btn btn-sm btn-login">💬 Comentar</a>
+
+            </div>
+          </div>
+
         </article>
       <?php endforeach; ?>
     <?php endif; ?>
   </section>
 
 </main>
+
+<!-- Bootstrap Bundle (para dropdowns y modales) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Función para cambiar estado -->
+<script>
+async function cambiarEstado(id, estado) {
+  if (!confirm(`¿Seguro que quieres marcar esta publicación como ${estado}?`)) return;
+  try {
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('estado', estado);
+    const res = await fetch('<?= $BASE ?>/api/publicacion_cambiar_estado.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert('✅ Estado actualizado correctamente');
+      location.reload();
+    } else {
+      alert('❌ ' + (data.error || 'Error al actualizar'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error de conexión');
+  }
+}
+</script>
 
 </body>
 </html>

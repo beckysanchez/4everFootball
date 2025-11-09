@@ -13,9 +13,17 @@ function jexit(array $payload): void {
   exit;
 }
 
-// Verifica sesión (admin)
-if (empty($_SESSION['user']) || !($_SESSION['user']['isAdmin'] ?? false)) {
-  jexit(['ok' => false, 'error' => 'No autorizado']);
+// ✅ Validación de sesión (admin con compatibilidad extendida)
+if (empty($_SESSION['user'])) {
+  jexit(['ok' => false, 'error' => 'No autorizado - sin sesión']);
+}
+
+$user = $_SESSION['user'];
+$rol = strtoupper($user['rol'] ?? '');
+$esAdmin = !empty($user['isAdmin']) || $rol === 'ADMIN';
+
+if (!$esAdmin) {
+  jexit(['ok' => false, 'error' => 'No autorizado - rol insuficiente']);
 }
 
 // Lee cuerpo JSON
@@ -34,6 +42,7 @@ $descripcion      = trim($data['descripcion'] ?? '');
 $sede             = trim($data['sede'] ?? '');
 $logo_url         = trim($data['logo_url'] ?? '');
 $portada_url      = trim($data['portada_url'] ?? '');
+$slug             = trim($data['slug'] ?? '');
 
 // Valida mínimos
 if ($nombre_comunidad === '' || $descripcion === '') {
@@ -43,18 +52,16 @@ if ($nombre_comunidad === '' || $descripcion === '') {
 // Inserta
 $stmt = $conexion->prepare("
   INSERT INTO mundial (nombre_comunidad, descripcion, sede, logo_url, portada_url, slug)
-VALUES (?, ?, ?, ?, ?, ?)
-
+  VALUES (?, ?, ?, ?, ?, ?)
 ");
 if (!$stmt) {
   jexit(['ok' => false, 'error' => 'Prep error: ' . $conexion->error]);
 }
-$slug = trim($data['slug'] ?? '');
 
 $stmt->bind_param("ssssss", $nombre_comunidad, $descripcion, $sede, $logo_url, $portada_url, $slug);
-
 
 if ($stmt->execute()) {
   jexit(['ok' => true, 'id' => $stmt->insert_id]);
 }
+
 jexit(['ok' => false, 'error' => $stmt->error]);

@@ -1,7 +1,19 @@
 <?php
-declare(strict_types=1);
-$root = realpath(__DIR__ . '/..');
-ini_set('session.save_path', $root . '/sessions');
-ini_set('session.cookie_path', '/');
-session_start();
-?>
+if (session_status() === PHP_SESSION_NONE) {
+
+    // Configuración estándar y estable (funciona en localhost sin errores CSRF)
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',     // 👈 ruta global, evita conflictos
+        'secure' => false, // true solo si usas HTTPS
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+
+    session_start();
+}
+
+// Generar token CSRF si no existe
+if (empty($_SESSION['csrf']) || strlen($_SESSION['csrf']) < 20) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}

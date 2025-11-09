@@ -266,10 +266,11 @@ function buildProfileMenu(){
     btnCreate.addEventListener('click', (e)=>{
       e.preventDefault();
       const user = getUser();
-      if (!user || !(user.isAdmin || user.rol_id == 1)) {
-        alert('Solo administradores pueden crear categorías.');
-        return;
-      }
+      if (!user || !(user.isAdmin || user.rol === 'ADMIN' || user.rol_id == 1)) {
+  alert('Solo administradores pueden crear categorías.');
+  return;
+}
+
       const modalEl = document.getElementById('createCategoryModal');
       const modal = new bootstrap.Modal(modalEl);
       modal.show();

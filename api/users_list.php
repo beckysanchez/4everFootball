@@ -1,80 +1,98 @@
-
 <?php
-//api para el distado con filtros
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
-
-session_start();
-if (empty($_SESSION['user']['isAdmin'])) { http_response_code(403); echo json_encode(['ok'=>false,'error'=>'Solo admins']); exit; }
-
 require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../config/api_guard.php';
+require_role_api('ADMIN');
 
-$q       = trim($_POST['q'] ?? '');
-$rol     = trim($_POST['rol'] ?? '');       // '', ADMIN, USUARIO
-$activo  = trim($_POST['activo'] ?? '');    // '', '1', '0'
-$orden   = trim($_POST['orden'] ?? 'reciente');
+// Parámetros
+$q = trim($_POST['q'] ?? '');
+$rol = trim($_POST['rol'] ?? '');
+$activo = $_POST['activo'] ?? '';
+$orden = $_POST['orden'] ?? 'reciente';
 $perPage = max(1, min(100, (int)($_POST['perPage'] ?? 10)));
-$page    = max(1, (int)($_POST['page'] ?? 1));
-$offset  = ($page-1)*$perPage;
+$page = max(1, (int)($_POST['page'] ?? 1));
 
-$w   = []; $params = []; $types = '';
+$where = [];
+$params = [];
+$types = '';
+
 if ($q !== '') {
-  $w[] = "(u.nombre_completo LIKE CONCAT('%',?,'%') OR u.email LIKE CONCAT('%',?,'%'))";
-  $params[] = $q; $params[] = $q; $types .= 'ss';
+  $where[] = "(u.nombre_completo LIKE ? OR u.email LIKE ?)";
+  $params[] = "%$q%";
+  $params[] = "%$q%";
+  $types .= 'ss';
 }
-if ($activo === '0' || $activo === '1') {
-  $w[] = 'u.activo = ?'; $params[] = (int)$activo; $types .= 'i';
-}
-if ($rol === 'ADMIN') {
-  $w[] = "EXISTS(SELECT 1 FROM usuario_rol ur JOIN roles r ON r.rol_id=ur.rol_id WHERE ur.usuario_id=u.usuario_id AND r.nombre='ADMIN')";
-} elseif ($rol === 'USUARIO') {
-  $w[] = "NOT EXISTS(SELECT 1 FROM usuario_rol ur JOIN roles r ON r.rol_id=ur.rol_id WHERE ur.usuario_id=u.usuario_id AND r.nombre='ADMIN')";
-}
-$where = $w ? ('WHERE '.implode(' AND ', $w)) : '';
 
-$orderby = match($orden){
+if ($rol !== '') {
+  $where[] = "r.nombre = ?";
+  $params[] = $rol;
+  $types .= 's';
+}
+
+if ($activo !== '') {
+  $where[] = "u.activo = ?";
+  $params[] = (int)$activo;
+  $types .= 'i';
+}
+
+$whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+$orderSQL = match($orden) {
   'antiguo' => 'u.creado_en ASC',
-  'nombre'  => 'u.nombre_completo ASC',
-  'email'   => 'u.email ASC',
-  default   => 'u.creado_en DESC'
+  'nombre' => 'u.nombre_completo ASC',
+  'email' => 'u.email ASC',
+  default => 'u.creado_en DESC'
 };
 
-$sqlCount = "SELECT COUNT(*) c FROM usuarios u $where";
-$stmt = $conexion->prepare($sqlCount);
+// Conteo total
+$sqlTotal = "
+  SELECT COUNT(*) AS total
+  FROM usuarios u
+  LEFT JOIN usuario_rol ur ON ur.usuario_id = u.usuario_id
+  LEFT JOIN roles r ON r.rol_id = ur.rol_id
+  $whereSQL
+";
+$stmt = $conexion->prepare($sqlTotal);
 if ($types) $stmt->bind_param($types, ...$params);
-$stmt->execute(); $res = $stmt->get_result(); $total = (int)($res->fetch_assoc()['c'] ?? 0);
+$stmt->execute();
+$total = $stmt->get_result()->fetch_assoc()['total'];
 $stmt->close();
 
-$sql = "SELECT 
-          u.usuario_id, u.nombre_completo, u.email, u.creado_en, u.activo,
-          EXISTS(SELECT 1 FROM usuario_rol ur JOIN roles r ON r.rol_id=ur.rol_id WHERE ur.usuario_id=u.usuario_id AND r.nombre='ADMIN') AS isAdmin
-        FROM usuarios u
-        $where
-        ORDER BY $orderby
-        LIMIT ? OFFSET ?";
-$params2 = $params; $types2 = $types . 'ii';
-$params2[] = $perPage; $params2[] = $offset;
+$offset = ($page - 1) * $perPage;
+
+// Consulta principal
+$sql = "
+  SELECT 
+    u.usuario_id AS id,
+    u.nombre_completo AS name,
+    u.email,
+    IFNULL(r.nombre, 'USUARIO') AS role,
+    u.creado_en AS created,
+    u.activo
+  FROM usuarios u
+  LEFT JOIN usuario_rol ur ON ur.usuario_id = u.usuario_id
+  LEFT JOIN roles r ON r.rol_id = ur.rol_id
+  $whereSQL
+  ORDER BY $orderSQL
+  LIMIT ? OFFSET ?
+";
+
+$params2 = $params;
+$types2 = $types . 'ii';
+$params2[] = $perPage;
+$params2[] = $offset;
 
 $stmt = $conexion->prepare($sql);
 $stmt->bind_param($types2, ...$params2);
-$stmt->execute(); $res = $stmt->get_result();
-$items = [];
-while ($row = $res->fetch_assoc()){
-  $items[] = [
-    'id'     => (int)$row['usuario_id'],
-    'name'   => (string)$row['nombre_completo'],
-    'email'  => (string)$row['email'],
-    'created'=> (string)$row['creado_en'],
-    'activo' => (int)$row['activo']===1,
-    'role'   => !empty($row['isAdmin']) ? 'ADMIN' : 'USUARIO'
-  ];
-}
-$stmt->close();
+$stmt->execute();
+$res = $stmt->get_result();
+$items = $res->fetch_all(MYSQLI_ASSOC);
 
 echo json_encode([
-  'ok'    => true,
-  'items' => $items,
-  'total' => $total,
-  'page'  => $page,
-  'pages' => max(1, (int)ceil($total/$perPage)),
-]);
+  'ok' => true,
+  'total' => (int)$total,
+  'page' => $page,
+  'pages' => ceil($total / $perPage),
+  'items' => $items
+], JSON_UNESCAPED_UNICODE);

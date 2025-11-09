@@ -1,46 +1,101 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
-session_start();
-require_once(__DIR__ . '/../conexion.php');
+declare(strict_types=1);
+header("Content-Type: application/json; charset=UTF-8");
+error_reporting(E_ALL);
 
-// --- VERIFICAR SESIÓN ---
-if (!isset($_SESSION['user'])) {
-    echo json_encode(['ok' => false, 'error' => 'Sesión no iniciada']);
+// 🔒 Protección unificada de sesión y rol
+require_once __DIR__ . '/../config/api_guard.php';
+require_role_api('ADMIN');
+
+// 🔌 Conexión
+require_once __DIR__ . '/../conexion.php';
+
+// --- Validar método ---
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['ok' => false, 'error' => 'Método no permitido']);
     exit;
 }
-if (strtolower($_SESSION['user']['rol']) !== 'admin') {
-    echo json_encode(['ok' => false, 'error' => 'No autorizado']);
+
+$admin_id = (int) ($_SESSION['user']['id'] ?? 0);
+
+// --- Obtener datos del POST ---
+$id      = $_POST['id']      ?? null;
+$estado  = strtoupper(trim($_POST['estado'] ?? ''));
+
+// --- Validaciones ---
+if (empty($id) || empty($estado)) {
+    echo json_encode(['ok' => false, 'error' => 'Faltan parámetros requeridos']);
     exit;
 }
 
-// --- OBTENER DATOS ---
-$id = $_POST['id'] ?? '';
-$estado = strtoupper(trim($_POST['estado'] ?? ''));
+// Estados permitidos
+$permitidos = ["APROBADA", "RECHAZADA", "PENDIENTE"];
+if (!in_array($estado, $permitidos, true)) {
+    echo json_encode(["ok" => false, "error" => "Estado inválido"]);
+    exit;
+}
 
-if (!$id || !$estado) {
-    echo json_encode(['ok' => false, 'error' => 'Faltan parámetros']);
+// --- Normalizar IDs ---
+$ids = [];
+if (is_array($id)) {
+    foreach ($id as $val) {
+        $val = (int)$val;
+        if ($val > 0) $ids[] = $val;
+    }
+} else {
+    $val = (int)$id;
+    if ($val > 0) $ids[] = $val;
+}
+
+if (!$ids) {
+    echo json_encode(['ok' => false, 'error' => 'IDs inválidos']);
     exit;
 }
 
 try {
-    if (is_array($id)) {
-        // Múltiples IDs
-        $ids = implode(',', array_map('intval', $id));
-        $sql = "UPDATE publicacion SET estatus = ? WHERE publicacion_id IN ($ids)";
+    // --- Construcción dinámica del IN() seguro ---
+    $in_placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    // --- SQL condicional según el estado ---
+    if ($estado === 'PENDIENTE') {
+        // Si vuelve a revisión, limpia campos de aprobación
+        $sql = "UPDATE publicacion 
+                SET estatus = 'PENDIENTE', aprobada_por = NULL, aprobada_en = NULL
+                WHERE publicacion_id IN ($in_placeholders)";
         $stmt = $conexion->prepare($sql);
-        $stmt->bind_param('s', $estado);
+        if (!$stmt) throw new Exception('Error al preparar la consulta: ' . $conexion->error);
+        $stmt->bind_param($types, ...$ids);
     } else {
-        // Un solo ID
-        $sql = "UPDATE publicacion SET estatus = ? WHERE publicacion_id = ?";
+        // Si se aprueba o rechaza, actualiza con datos del admin
+        $sql = "UPDATE publicacion 
+                SET estatus = ?, aprobada_por = ?, aprobada_en = NOW()
+                WHERE publicacion_id IN ($in_placeholders)";
         $stmt = $conexion->prepare($sql);
-        $stmt->bind_param('si', $estado, $id);
+        if (!$stmt) throw new Exception('Error al preparar la consulta: ' . $conexion->error);
+
+        $bind_types = 'si' . $types;
+        $bind_values = array_merge([$estado, $admin_id], $ids);
+        $stmt->bind_param($bind_types, ...$bind_values);
     }
 
-    if (!$stmt->execute()) {
-        throw new Exception($stmt->error);
+    // --- Ejecutar ---
+    $stmt->execute();
+
+    if ($stmt->affected_rows > 0) {
+        echo json_encode(['ok' => true, 'mensaje' => '✅ Publicación(es) actualizada(s) correctamente']);
+    } else {
+        echo json_encode(['ok' => false, 'error' => 'No se actualizó ningún registro']);
     }
 
-    echo json_encode(['ok' => true, 'msg' => 'Estado actualizado correctamente']);
-} catch (Exception $e) {
-    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    $stmt->close();
+    $conexion->close();
+
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Error al actualizar: ' . $e->getMessage()
+    ]);
 }

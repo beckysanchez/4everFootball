@@ -1,6 +1,13 @@
 <?php
+declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
-require_once(__DIR__ . '/../conexion.php');
+
+// 🔒 Protección de sesión y rol admin
+require_once __DIR__ . '/../config/api_guard.php';
+require_role_api('ADMIN');
+
+// 🔌 Conexión
+require_once __DIR__ . '/../conexion.php';
 
 try {
     // --- Categorías ---
@@ -27,13 +34,14 @@ try {
     echo json_encode([
         "ok" => true,
         "categorias" => array_column($cats, "nombre"),
-        "sedes" => $sedes, // <-- ahora devuelve un arreglo con id + nombre
+        "sedes" => $sedes, // devuelve id + nombre
         "estados" => array_column($estados, "estatus")
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    http_response_code(500);
     echo json_encode([
         "ok" => false,
         "error" => "Error al cargar los filtros: " . $e->getMessage()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }

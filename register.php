@@ -182,9 +182,10 @@
     </div>
   </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
 
-  <script>
-  // Toggle contraseña
+  // ========== TOGGLE CONTRASEÑA ==========
   (function setupEyeToggle(){
     const input = document.getElementById('password');
     const btn   = document.getElementById('togglePwd');
@@ -203,7 +204,157 @@
     });
   })();
 
-  // Lógica de formulario
+  // ========== VALIDACIÓN DE PAÍS Y NACIONALIDAD ==========
+  const countryInput      = document.getElementById("country");
+  const nationalityInput  = document.getElementById("nationality");
+
+  let lastCountryInfo = null;
+  let nationalityWasAutofilled = false;
+
+  const normalize = s =>
+    (s || "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const titleCase = s =>
+    (s || "").toLowerCase().replace(/\b\p{L}+/gu, w => w[0].toUpperCase() + w.slice(1));
+
+  async function fetchCountryInfo(query) {
+    if (!query) return null;
+    try {
+      const url = `https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,translations,demonyms`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!Array.isArray(data) || !data.length) return null;
+
+      const qNorm = normalize(query);
+      let best = data.find(c =>
+        [c?.name?.common, c?.name?.official, c?.translations?.spa?.common, c?.translations?.spa?.official]
+          .filter(Boolean).map(normalize).includes(qNorm)
+      ) || data[0];
+
+      const spaM = best?.demonyms?.spa?.m || "";
+      const spaF = best?.demonyms?.spa?.f || "";
+      const engM = best?.demonyms?.eng?.m || "";
+      const engF = best?.demonyms?.eng?.f || "";
+
+      return {
+        countryCommon: best?.translations?.spa?.common || best?.name?.common || query,
+        demonyms: [spaM, spaF, engM, engF].filter(Boolean)
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const fallbackTranslations = {
+    "mexican": "Mexicano", "argentine": "Argentino", "argentinian": "Argentino",
+    "chilean": "Chileno", "uruguayan": "Uruguayo", "brazilian": "Brasileño",
+    "peruvian": "Peruano", "colombian": "Colombiano", "spanish": "Español",
+    "american": "Estadounidense", "french": "Francés", "italian": "Italiano",
+    "german": "Alemán", "canadian": "Canadiense", "paraguayan": "Paraguayo",
+    "venezuelan": "Venezolano", "ecuadorian": "Ecuatoriano", "bolivian": "Boliviano"
+  };
+
+  function traducirAGentilicioEspanol(eng) {
+    if (!eng) return "";
+    const key = normalize(eng);
+    return fallbackTranslations[key] || eng;
+  }
+
+  function markValid(el, ok, msg = "") {
+    el.classList.toggle("is-valid",   !!ok);
+    el.classList.toggle("is-invalid", !ok);
+    el.setCustomValidity(ok ? "" : msg);
+  }
+
+  function nationalityMatches(value, info) {
+    if (!info || !info.demonyms?.length) return false;
+    const v = normalize(value);
+    // Acepta masculino/femenino y versión traducida
+    return info.demonyms.some(d => {
+      const n = normalize(d);
+      return v === n || v === normalize(traducirAGentilicioEspanol(d)) ||
+             v.replace(/a$/, "o") === n.replace(/a$/, "o") || v.replace(/o$/, "a") === n.replace(/o$/, "a");
+    });
+  }
+
+  function autofillNationality(info) {
+    if (!info || !info.demonyms?.length) return;
+    let preferSpa = info.demonyms.find(d => /[áéíóúñ]/i.test(d) || /o$|a$/i.test(d)) || info.demonyms[0];
+    preferSpa = traducirAGentilicioEspanol(preferSpa);
+    nationalityInput.value = titleCase(preferSpa);
+    nationalityWasAutofilled = true;
+  }
+
+  async function handleCountryChange() {
+    const val = countryInput.value.trim();
+    if (!val) {
+      lastCountryInfo = null;
+      markValid(countryInput, false, "Indica tu país.");
+      markValid(nationalityInput, false, "Selecciona primero un país.");
+      return;
+    }
+
+    lastCountryInfo = await fetchCountryInfo(val);
+    markValid(countryInput, !!lastCountryInfo, lastCountryInfo ? "" : "País no reconocido.");
+
+    if (!lastCountryInfo) {
+      markValid(nationalityInput, false, "Selecciona primero un país válido.");
+      return;
+    }
+
+    if (!nationalityInput.value.trim() || nationalityWasAutofilled) {
+      autofillNationality(lastCountryInfo);
+    }
+
+    const natOk = nationalityMatches(nationalityInput.value, lastCountryInfo);
+    markValid(nationalityInput, natOk, "El gentilicio no coincide con el país.");
+  }
+
+  async function handleNationalityInput() {
+    const val = nationalityInput.value.trim();
+    if (!val) {
+      nationalityWasAutofilled = false;
+      markValid(nationalityInput, false, "Indica tu nacionalidad.");
+      return;
+    }
+    nationalityWasAutofilled = false;
+
+    // Si el país está vacío, buscarlo por gentilicio
+    if (!countryInput.value.trim()) {
+      for (const [eng, esp] of Object.entries(fallbackTranslations)) {
+        if (normalize(val) === normalize(esp)) {
+          const country = Object.keys(fallbackTranslations).find(k => fallbackTranslations[k] === esp);
+          const reverse = await fetchCountryInfo(esp);
+          if (reverse) {
+            countryInput.value = reverse.countryCommon;
+            lastCountryInfo = reverse;
+            markValid(countryInput, true);
+            break;
+          }
+        }
+      }
+    }
+
+    if (!lastCountryInfo) {
+      markValid(nationalityInput, false, "Selecciona o escribe un país válido.");
+      return;
+    }
+
+    const ok = nationalityMatches(val, lastCountryInfo);
+    markValid(nationalityInput, ok, "El gentilicio no coincide con el país.");
+  }
+
+  countryInput.addEventListener("input",  handleCountryChange);
+  countryInput.addEventListener("blur",   handleCountryChange);
+  nationalityInput.addEventListener("input", handleNationalityInput);
+  nationalityInput.addEventListener("blur",  handleNationalityInput);
+
+  // ========== FORMULARIO ==========
   (function(){
     const form   = document.getElementById('registerForm');
     const msgEl  = document.getElementById('regMessage');
@@ -213,15 +364,14 @@
     const clearMsg = () => { msgEl.className = 'small mb-3'; msgEl.textContent = ''; };
     const setLoading = (v) => { if (submit){ submit.disabled = v; submit.textContent = v ? 'Creando…' : 'Crear cuenta'; } };
 
-    // Validaciones cliente
     function isAtLeast12(birth){
       if(!birth) return false;
       const bd = new Date(birth);
-      if (Number.isNaN(+bd)) return false;
       const today = new Date();
       const limit = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate());
       return bd <= limit;
     }
+
     function validatePhoto() {
       const input = document.getElementById('photo');
       if (!input.files || !input.files[0]) { input.setCustomValidity('Requerida'); return false; }
@@ -233,7 +383,6 @@
       return okType && okSize;
     }
 
-    // Preview foto
     document.getElementById('photo')?.addEventListener('change', (e) => {
       const f = e.target.files?.[0];
       const img = document.getElementById('photoPreviewImg');
@@ -247,12 +396,10 @@
       validatePhoto();
     });
 
-    // Validación fecha onChange
     document.getElementById('birth_date')?.addEventListener('change', (e)=>{
       e.target.setCustomValidity(isAtLeast12(e.target.value) ? '' : 'Eres menor de 12');
     });
 
-    // Submit AJAX
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearMsg();
@@ -292,6 +439,9 @@
       }
     });
   })();
+});
 </script>
+
+
 </body>
 </html>
