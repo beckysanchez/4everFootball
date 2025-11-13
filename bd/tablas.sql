@@ -181,6 +181,9 @@ SET estatus = 'PENDIENTE',
 WHERE estatus = 'RECHAZADA';  
 
 SELECT * FROM comentario ORDER BY creado_en DESC;
+SHOW CREATE VIEW vista_publicaciones_detalle;
+SHOW TABLES;
+
 
 
 

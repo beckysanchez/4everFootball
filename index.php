@@ -239,6 +239,7 @@ function buildProfileMenu(){
 
     if (u.rol === 'ADMIN'){
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Panel de aprobaciones</a>`;
+      html += `<a class="ff-dropdown-item" href="${BASE}/admin-usuarios.php">Administrar Usuarios</a>`;
       html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
     }
 
