@@ -190,20 +190,21 @@ $isAdmin = $isLogged && ($user['rol'] ?? '') === 'ADMIN';
   <script>
 const BASE = '<?= $BASE ?>';
 
-// ======== ELEMENTOS GLOBALES ========
+/* ======================================================
+   ELEMENTOS GLOBALES
+====================================================== */
 const el = {
   cards: document.getElementById('cards'),
   empty: document.getElementById('empty'),
   msg: document.getElementById('listMessage'),
   profileBtn: document.getElementById('profileBtn'),
   profileMenu: document.getElementById('profileMenu'),
-  gruposRight: document.getElementById('gruposRight'),
-  formCreateCategory: document.getElementById('formCreateCategory'),
-  saveCategoryBtn: document.getElementById('saveCategoryBtn'),
-  createCategoryMsg: document.getElementById('createCategoryMsg')
+  gruposRight: document.getElementById('gruposRight')
 };
 
-// ======== SESIÓN ========
+/* ======================================================
+   SESIÓN
+====================================================== */
 async function fetchUser(){
   try {
     const res = await fetch(`${BASE}/api/get_user.php`);
@@ -216,24 +217,14 @@ async function fetchUser(){
   }
 }
 
-function getUser(){ try{ return JSON.parse(localStorage.getItem('ff_user')); }catch{ return null; } }
-async function logout(e){
-  e?.preventDefault();
-
-  try {
-    const res = await fetch(`${BASE}/api/logout.php`, { method: 'POST' });
-    const data = await res.json();
-    console.log(data.msg || 'Sesión cerrada.');
-  } catch (err) {
-    console.error('Error al cerrar sesión:', err);
-  }
-
-  localStorage.removeItem('ff_user');
-  location.href = `${BASE}/index.php`;
+function getUser(){
+  try { return JSON.parse(localStorage.getItem('ff_user')); }
+  catch { return null; }
 }
 
-
-// ======== MENÚ PERFIL ========
+/* ======================================================
+   MENÚ DE PERFIL
+====================================================== */
 function buildProfileMenu(){
   const u = getUser();
   let html = '';
@@ -242,149 +233,275 @@ function buildProfileMenu(){
     html += `<a class="ff-dropdown-item" href="${BASE}/login.php">Iniciar sesión</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/register.php">Crear cuenta</a>`;
   } else {
-    html += `<div class="ff-dropdown-item ff-user-greet">Hola, ${u.nombre || u.name || u.email}</div>`;
+    html += `<div class="ff-dropdown-item ff-user-greet">Hola, ${u.nombre}</div>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/perfil.php">Mi perfil</a>`;
     html += `<a class="ff-dropdown-item" href="${BASE}/mispublicaciones.php">Mis posts</a>`;
 
-    if (u.rol === 'ADMIN') {
-
-      html += `<a class="ff-dropdown-item" href="${BASE}/admin-usuarios.php">Administrar Usuarios</a>`;
-      html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Aprobar Publicacion</a>`;
+    if (u.rol === 'ADMIN'){
+      html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Panel de aprobaciones</a>`;
       html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
-      html += `<a href="#" class="ff-dropdown-item" id="btnCreateCategory">Crear categoría</a>`;
     }
 
-    html += `<button class="ff-dropdown-item logout text-start" id="logoutBtn" type="button">Cerrar sesión</button>`;
+    html += `<button class="ff-dropdown-item logout text-start" id="logoutBtn">Cerrar sesión</button>`;
   }
 
   el.profileMenu.innerHTML = html;
-
   document.getElementById('logoutBtn')?.addEventListener('click', logout);
-
-  const btnCreate = document.getElementById('btnCreateCategory');
-  if (btnCreate){
-    btnCreate.addEventListener('click', (e)=>{
-      e.preventDefault();
-      const user = getUser();
-      if (!user || !(user.isAdmin || user.rol === 'ADMIN' || user.rol_id == 1)) {
-  alert('Solo administradores pueden crear categorías.');
-  return;
 }
 
-      const modalEl = document.getElementById('createCategoryModal');
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    });
-  }
-}
-
-// Dropdown toggle
-el.profileBtn.addEventListener('click', () => {
+// Abrir/cerrar dropdown
+el.profileBtn?.addEventListener('click', () => {
   const open = el.profileMenu.classList.toggle('show');
-  el.profileBtn.setAttribute('aria-expanded', String(open));
+  el.profileBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
 });
-document.addEventListener('click', (e) => {
-  if (!el.profileMenu.contains(e.target) && !el.profileBtn.contains(e.target)) {
+document.addEventListener('click', (e)=>{
+  if (!el.profileMenu.contains(e.target) && !el.profileBtn.contains(e.target)){
     el.profileMenu.classList.remove('show');
-    el.profileBtn.setAttribute('aria-expanded', 'false');
   }
 });
 
-// ======== GUARDAR NUEVA CATEGORÍA ========
-el.saveCategoryBtn?.addEventListener('click', async ()=>{
-  const nombre = document.getElementById('categoryName').value.trim();
-  const slug = document.getElementById('categorySlug').value.trim();
+/* ======================================================
+   FEED PERSONALIZADO + LAZY LOADING
+====================================================== */
+let offset = 0;
+let cargando = false;
+let usuarioSigue = null;
 
-  if (!nombre || !slug) {
-    el.createCategoryMsg.textContent = 'Todos los campos son obligatorios.';
-    return;
-  }
+// Cargar primeras publicaciones
+cargarFeed();
 
-  el.createCategoryMsg.textContent = 'Guardando...';
+async function cargarFeed(){
+  if (cargando) return;
+  cargando = true;
+
+  el.msg.textContent = "Cargando publicaciones...";
 
   try {
-    const res = await fetch(`${BASE}/api/create_category.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, slug })
-    });
+    const res = await fetch(`${BASE}/api/publicaciones_listar_seguidos.php?offset=${offset}`);
+
     const json = await res.json();
 
-    if (json.ok) {
-      el.createCategoryMsg.textContent = '✅ Categoría creada correctamente';
-      setTimeout(()=> location.reload(), 1000);
-    } else {
-      el.createCategoryMsg.textContent = '❌ ' + (json.error || 'Error al crear categoría');
+    if (json.seguido === false){
+      el.cards.innerHTML = `
+        <div class="glass-card p-4 text-center">
+          <h5 class="mb-2">Aún no sigues ninguna sede o comunidad</h5>
+          <p class="text-secondary mb-0">Sigue una para comenzar a ver publicaciones.</p>
+        </div>
+      `;
+      el.msg.textContent = "";
+      return;
     }
-  } catch {
-    el.createCategoryMsg.textContent = '❌ Error de conexión con el servidor';
-  }
-});
 
-// ======== FEED ========
-async function loadFeed(){
-  el.msg.textContent = 'Cargando publicaciones...';
-  try {
-    const res = await fetch(`${BASE}/api/feed.php`);
-    const json = await res.json();
-    if (json.ok) renderFeed(json.data);
-    else el.msg.textContent = 'No se pudieron cargar las publicaciones.';
-  } catch {
-    el.msg.textContent = 'Error de conexión con el servidor.';
+    usuarioSigue = true;
+
+    renderFeed(json.publicaciones);
+
+    offset += 10;
+    cargando = false;
+    el.msg.textContent = "";
+
+  } catch (e){
+    el.msg.textContent = "Error de conexión con el servidor.";
+    console.error(e);
   }
 }
 
 function renderFeed(list){
-  el.cards.innerHTML = list.map(row => `
-    <article class="ff-post">
-      <div class="ff-post-header">
-        <h5>${row.titulo}</h5>
-        <small>${row.categoria} · ${new Date(row.fecha).toLocaleDateString()}</small>
-      </div>
-      ${row.mediaType === 'video'
-        ? `<video src="${row.src}" ${row.poster ? `poster="${row.poster}"` : ''} controls playsinline></video>`
-        : `<img src="${row.src}" alt="${row.titulo}" onerror="this.remove()">`}
-    </article>
-  `).join('');
-  el.empty.classList.toggle('d-none', list.length > 0);
-  el.msg.textContent = '';
+  if (!list?.length){
+    if (offset === 0){
+      el.cards.innerHTML = `
+        <div class="glass-card p-4 text-center">
+          <p class="mb-0">No encontramos publicaciones, Sigue a un grupo.</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  list.forEach(p => {
+    el.cards.innerHTML += renderCard(p);
+  });
 }
 
-// ======== GRUPOS (dinámico desde BD) ========
+function renderCard(p){
+  return `
+    <article class="ff-post glass-card p-3">
+
+      <!-- ENCABEZADO DEL GRUPO -->
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <img src="${p.sede_logo || BASE + '/img/default_logo.png'}"
+             width="32" height="32"
+             class="rounded-circle"
+             style="background:#111;">
+        <a href="${BASE}/sede.php?slug=${p.sede_slug}"
+           class="text-decoration-none fw-bold text-white">
+           ${p.sede_nombre}
+        </a>
+        <small class="text-secondary ms-auto">
+          ${p.categoria} · ${new Date(p.creada_en).toLocaleDateString()}
+        </small>
+      </div>
+
+      <!-- TÍTULO -->
+      <h5 class="mt-1">${p.titulo}</h5>
+
+      <!-- MEDIA -->
+      ${p.tipo_media === "VIDEO"
+        ? `<video class="w-100 mt-2" src="${p.media_url}" controls></video>`
+        : `<img class="w-100 mt-2" src="${p.media_url}" alt="imagen" onerror="this.style.display='none'">`
+      }
+
+      <!-- DESCRIPCIÓN -->
+      <p class="mt-2">${p.descripcion || ""}</p>
+
+      <!-- ACCIONES -->
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-light">
+          👍 Like
+        </button>
+        <a href="${BASE}/detalle-publicacion.php?id=${p.publicacion_id}" 
+           class="btn btn-sm btn-login">
+           💬 Comentar
+        </a>
+      </div>
+    </article>
+  `;
+}
+
+
+
+
+/* ======================================================
+   SCROLL INFINITO
+====================================================== */
+window.addEventListener('scroll', () => {
+  if (!usuarioSigue) return;
+
+  const cercaDelFinal = window.innerHeight + window.scrollY >= document.body.offsetHeight - 600;
+
+  if (cercaDelFinal) cargarFeed();
+});
+
+/* ======================================================
+   GRUPOS (lado derecho)
+====================================================== */
+loadGroups();
+
 async function loadGroups() {
   try {
     const res = await fetch(`${BASE}/api/get_grupos.php`);
     const json = await res.json();
-    if (json.ok) renderGroups(json.data);
-    else el.gruposRight.innerHTML = `<small class="text-secondary">Sin comunidades disponibles aún.</small>`;
+
+    if (!json.ok){
+      el.gruposRight.innerHTML = "<small class='text-secondary'>Sin comunidades.</small>";
+      return;
+    }
+
+    renderGroups(json.data);
+
   } catch {
-    el.gruposRight.innerHTML = `<small class="text-secondary">Error al cargar comunidades.</small>`;
+    el.gruposRight.innerHTML = "<small class='text-secondary'>Error al cargar.</small>";
   }
 }
 
-function renderGroups(grupos) {
-  if (!grupos.length) {
-    el.gruposRight.innerHTML = `<small class="text-secondary">Sin comunidades creadas todavía.</small>`;
+function renderGroups(grupos){
+  if (!grupos.length){
+    el.gruposRight.innerHTML = "<small class='text-secondary'>No hay comunidades creadas.</small>";
     return;
   }
 
   el.gruposRight.innerHTML = grupos.map(g => `
     <div class="ff-group-item d-flex justify-content-between align-items-center">
-      <a class="d-flex align-items-center gap-2 text-decoration-none" href="${BASE}/sede.php?slug=${g.slug}">
-        <img src="${g.logo || BASE + '/img/default_logo.png'}" alt="${g.nombre}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">
+      <a href="${BASE}/sede.php?slug=${g.slug}" class="d-flex align-items-center gap-2 text-decoration-none">
+        <img src="${g.logo || BASE + '/img/default_logo.png'}"
+             class="rounded-circle" width="28" height="28">
         <span>${g.nombre}</span>
       </a>
-      <button class="btn btn-sm btn-outline-light">Seguir</button>
+      <button class="btn btn-sm btn-outline-light btn-seguir" data-id="${g.id}">
+        Seguir
+      </button>
     </div>
   `).join('');
+
+  // Verificar cuales están seguidos
+  grupos.forEach(g => marcarSiSigue(g.id));
 }
 
-// ======== INICIALIZACIÓN ========
-fetchUser();
-loadFeed();
-loadGroups();
+async function marcarSiSigue(id){
+  const res = await fetch(`${BASE}/api/sigue.php?id=${id}`);
+  const json = await res.json();
 
+  if (json.sigue){
+    const btn = document.querySelector(`button[data-id="${id}"]`);
+    if (btn){
+      btn.classList.add('siguiendo');
+      btn.textContent = 'Siguiendo';
+    }
+  }
+}
+
+/* ======================================================
+   LOGOUT
+====================================================== */
+async function logout(){
+  await fetch(`${BASE}/api/logout.php`, { method: 'POST' });
+  localStorage.removeItem('ff_user');
+  location.href = `${BASE}/index.php`;
+}
+
+/* ======================================================
+   INICIALIZACIÓN
+====================================================== */
+fetchUser();
+
+/* ======================================================
+   BOTONES SEGUIR / SIGUIENDO
+====================================================== */
+document.addEventListener('click', async (e) => {
+  if (!e.target.matches('.btn-seguir')) return;
+
+  const btn = e.target;
+  const mundial_id = Number(btn.dataset.id);
+
+  if (!mundial_id) return;
+
+  // Si ya sigue → unfollow
+  if (btn.classList.contains('siguiendo')) {
+    const res = await fetch(`${BASE}/api/unfollow.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mundial_id })
+    });
+    const json = await res.json();
+
+    if (json.ok) {
+      btn.classList.remove('siguiendo');
+      btn.textContent = 'Seguir';
+      offset = 0;
+      el.cards.innerHTML = "";
+      cargarFeed();
+    }
+    return;
+  }
+
+  // Si NO sigue → follow
+  const res = await fetch(`${BASE}/api/seguir.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mundial_id })
+  });
+  const json = await res.json();
+
+  if (json.ok) {
+    btn.classList.add('siguiendo');
+    btn.textContent = 'Siguiendo';
+    offset = 0;
+    el.cards.innerHTML = "";
+    cargarFeed();
+  }
+});
 </script>
+
 
 </body>
 </html>

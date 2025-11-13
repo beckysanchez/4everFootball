@@ -3,14 +3,14 @@ if (session_status() === PHP_SESSION_NONE) {
 
     // Configuración estándar y estable (funciona en localhost sin errores CSRF)
     session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',     // 👈 ruta global, evita conflictos
-        'secure' => false, // true solo si usas HTTPS
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
+    'lifetime' => 0,
+    'path' => '/4everFootball',
+    'secure' => false,
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+session_start();
 
-    session_start();
 }
 
 // Generar token CSRF si no existe

@@ -1,35 +1,64 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
+
+header('Content-Type: application/json');
 require_once __DIR__ . '/../conexion.php';
+session_start();
 
-$sql = "SELECT * FROM vista_publicaciones_detalle ORDER BY creada_en DESC";
-$result = $conexion->query($sql);
+$usuario_id = $_SESSION['usuario_id'] ?? null;
 
-if (!$result) {
-    echo json_encode(['ok' => false, 'error' => $conexion->error]);
+if (!$usuario_id) {
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Usuario no logueado',
+        'publicaciones' => []
+    ]);
     exit;
 }
 
-$publicaciones = [];
-while ($fila = $result->fetch_assoc()) {
-    $publicaciones[] = $fila;
+$offset = intval($_GET['offset'] ?? 0);
+$limit  = 10; // lazy loading
+
+// 1. Ver qué mundiales sigue el usuario
+$sqlSeguidos = "SELECT mundial_id
+                FROM usuario_mundial_seguido
+                WHERE usuario_id = $usuario_id";
+
+$seg = $conexion->query($sqlSeguidos);
+
+if ($seg->num_rows === 0) {
+    echo json_encode([
+        'ok' => true,
+        'seguido' => false,
+        'mensaje' => 'Sigue alguna sede o comunidad para ver publicaciones.',
+        'publicaciones' => []
+    ]);
+    exit;
+}
+
+$mundiales = [];
+while ($fila = $seg->fetch_assoc()) {
+    $mundiales[] = $fila['mundial_id'];
+}
+
+$lista = implode(",", $mundiales);
+
+// 2. Cargar publicaciones solo de esos mundiales
+$sqlFeed = "
+SELECT * 
+FROM vista_publicaciones_detalle
+WHERE mundial_id IN ($lista)
+ORDER BY creada_en DESC
+LIMIT $limit OFFSET $offset";
+
+$res = $conexion->query($sqlFeed);
+
+$pubs = [];
+while ($row = $res->fetch_assoc()) {
+    $pubs[] = $row;
 }
 
 echo json_encode([
     'ok' => true,
-    'total' => count($publicaciones),
-    'publicaciones' => $publicaciones
+    'seguido' => true,
+    'publicaciones' => $pubs
 ]);
-async function aplicarFiltros() {
-  const cat = document.querySelector('#selectCategoria').value; // id que tengas
-  const res = await fetch(`api/feed.php?categoria=${encodeURIComponent(cat)}`);
-  const { ok, publicaciones } = await res.json();
-  if (ok) {
-    document.getElementById('feed').innerHTML = publicaciones.map(renderCard).join('');
-    hookCommentForms();
-  }
-}
-
-
-$conexion->close();
-?>

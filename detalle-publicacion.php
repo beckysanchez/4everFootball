@@ -13,11 +13,15 @@ if ($id <= 0) {
 // --- Cargar publicación ---
 $stmt = $conexion->prepare("
   SELECT 
-    p.*, 
-    u.nombre_completo AS autor, 
+    p.*,
+    u.nombre_completo AS autor,
     c.nombre AS categoria,
     m.nombre_comunidad AS sede_nombre,
-    m.mundial_id
+    m.slug AS sede_slug,
+    m.logo_url AS sede_logo,
+    m.portada_url AS sede_portada,
+    m.descripcion AS sede_descripcion,
+    m.sede AS sede_pais
   FROM publicacion p
   JOIN usuarios u ON u.usuario_id = p.usuario_id
   JOIN categoria c ON c.categoria_id = p.categoria_id
@@ -25,6 +29,7 @@ $stmt = $conexion->prepare("
   WHERE p.publicacion_id = ?
   LIMIT 1
 ");
+
 $stmt->bind_param('i', $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -48,6 +53,12 @@ $tipo_media  = $pub['tipo_media'];
 $sede_nombre = htmlspecialchars($pub['sede_nombre']);
 $sede_slug   = strtolower(str_replace(' ', '-', $sede_nombre));
 $likesFake   = rand(50, 900);
+$sede_slug   = htmlspecialchars($pub['sede_slug']);
+$sede_logo   = htmlspecialchars($pub['sede_logo']);
+$sede_portada = htmlspecialchars($pub['sede_portada']);
+$sede_pais    = htmlspecialchars($pub['sede_pais']);
+$sede_desc    = htmlspecialchars($pub['sede_descripcion']);
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -90,16 +101,20 @@ $likesFake   = rand(50, 900);
   <article id="post" class="ff-post mb-4">
     <div class="ff-post-header">
       <div class="ff-post-meta">
-        <div class="ff-avatar"></div>
+        <div class="ff-avatar">
+  <img src="<?= $sede_logo ?>" width="42" height="42" class="rounded-circle" alt="<?= $sede_nombre ?>">
+</div>
+
         <div>
           <div class="d-flex align-items-center gap-2">
             <strong id="postTitle"><?= $titulo ?></strong>
             <span id="postState" class="ff-chip"><?= ucfirst(strtolower($estado)) ?></span>
           </div>
           <div class="ff-post-sub">
-            <a class="ff-group-link-mini" href="<?= $BASE ?>/sede.php?slug=<?= urlencode($sede_slug) ?>">
-              <?= $sede_nombre ?>
-            </a>
+            <a class="ff-group-link-mini" href="<?= $BASE ?>/sede.php?slug=<?= htmlspecialchars($sede_slug) ?>">
+    <?= $sede_nombre ?>
+</a>
+
             · <?= $fecha ?> · <?= $autor ?>
           </div>
         </div>
