@@ -250,6 +250,16 @@ function buildProfileMenu(){
   el.profileMenu.innerHTML = html;
   document.getElementById('logoutBtn')?.addEventListener('click', logout);
 }
+// Listener para abrir el modal de categoría
+document.addEventListener('click', (e)=>{
+  if (e.target.id === "btnCreateCategory") {
+    e.preventDefault();
+
+    const modalEl = document.getElementById('createCategoryModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+});
 
 // Abrir/cerrar dropdown
 el.profileBtn?.addEventListener('click', () => {
