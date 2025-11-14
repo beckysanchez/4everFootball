@@ -241,6 +241,7 @@ function buildProfileMenu(){
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-aprobaciones.php">Panel de aprobaciones</a>`;
       html += `<a class="ff-dropdown-item" href="${BASE}/admin-usuarios.php">Administrar Usuarios</a>`;
       html += `<a class="ff-dropdown-item" href="${BASE}/pagina.php">Crear comunidad</a>`;
+       html += `<a href="#" class="ff-dropdown-item" id="btnCreateCategory">Crear categoría</a>`;
     }
 
     html += `<button class="ff-dropdown-item logout text-start" id="logoutBtn">Cerrar sesión</button>`;
