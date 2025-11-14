@@ -107,10 +107,10 @@ $stmt->close();
 
             <div class="card-body p-2">
               <div class="d-flex justify-content-between align-items-start mb-1">
-                <strong><?= $titulo ?></strong>
+           <strong id="miTitulo"><?= $titulo ?></strong>
                 <span class="badge bg-<?= $chipColor ?>"><?= $estado ?></span>
               </div>
-              <div class="text-secondary mb-1" style="font-size:0.85rem;">
+              <div class="text-secondary mb-1" style="font-size:0.85rem; color:#b0b0b0;">
                 <?= $sede ?> · <?= $fecha ?>
               </div>
               <span class="ff-chip text-uppercase" style="font-size:0.75rem;"><?= $categoria ?></span>

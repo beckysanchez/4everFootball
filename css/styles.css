@@ -550,6 +550,15 @@ textarea.form-control.is-valid{
   transform: translateY(-1px);
 }
 
+/*color titulo card mis publicaciones*/
+#miTitulo {
+    color: #dbdcdb; 
+}
+
+.text-secondary mb-1{
+color: #b0b0b0; 
+}
+
 .ff-avatar-btn:active{
   transform: translateY(0);
   box-shadow:
