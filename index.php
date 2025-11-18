@@ -576,34 +576,46 @@ document.getElementById('saveCategoryBtn').addEventListener('click', async () =>
   const slug = document.getElementById('categorySlug').value.trim();
   const msg = document.getElementById('createCategoryMsg');
 
+  console.log("Nombre:", nombre);
+  console.log("Slug:", slug);
+
   if (!nombre || !slug) {
     msg.textContent = "Completa ambos campos.";
     return;
   }
 
   try {
-    fetch(`${BASE}/api/create_category.php`, {
+    // 👇 AQUÍ ESTABA EL ERROR (le faltaba await y faltaba res = ...)
+    const res = await fetch(`${BASE}/api/create_category.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre, slug })
     });
 
     const json = await res.json();
+    console.log('Respuesta del servidor:', json);
+
     if (!json.ok) {
       msg.textContent = json.error || "Error al guardar";
       return;
     }
 
-    // 🟢 Agregar directamente al <select>
+    // 🟢 Agregar nueva categoría al select
     addCategoryToSelect(json.nombre, json.slug);
 
-    // 🧼 Limpiar y cerrar
-    document.getElementById('formCreateCategory').reset();
-    msg.textContent = "";
-    const modal = bootstrap.Modal.getInstance(document.getElementById('createCategoryModal'));
-    modal.hide();
+    // Limpiar y cerrar
+   // Limpiar y cerrar
+document.getElementById('formCreateCategory').reset();
+msg.textContent = "";
+
+const modalEl = document.getElementById('createCategoryModal');
+const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+modal.hide();
+
 
   } catch (e) {
+   console.log("Error en create_category:", e);
+
     msg.textContent = "Error de conexión.";
   }
 });
@@ -617,6 +629,7 @@ function addCategoryToSelect(nombre, slug) {
   option.textContent = nombre;
   catSelect.appendChild(option);
 }
+
 
 </script>
 </body>
