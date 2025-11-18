@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
-
+//para las publis a aprobar
 // 🔒 Protección global de sesión y rol
 require_once __DIR__ . '/../config/api_guard.php';
 require_role_api('ADMIN');

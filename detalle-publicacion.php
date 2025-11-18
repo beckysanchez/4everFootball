@@ -10,6 +10,10 @@ if ($id <= 0) {
   exit;
 }
 
+// Incrementar contador de vistas
+$conexion->query("UPDATE publicacion SET views = views + 1 WHERE publicacion_id = $id");
+
+
 // --- Cargar publicación ---
 $stmt = $conexion->prepare("
   SELECT 
@@ -84,20 +88,27 @@ $sede_desc    = htmlspecialchars($pub['sede_descripcion']);
     <a href="<?= $BASE ?>/index.php" class="d-flex align-items-center gap-2 text-decoration-none">
       <img src="<?= $BASE ?>/img/logo.svg" alt="4everFootball" style="height:34px">
     </a>
-    <form id="headerSearch" class="ms-auto me-auto w-50 d-flex" role="search">
-      <div class="input-group ff-search w-100">
-        <span class="input-group-text">🔎</span>
-        <input id="qHeader" type="search" class="form-control" placeholder="Buscar en 4everFootball…">
-      </div>
-    </form>
+    <form id="headerSearch" class="ms-auto me-auto w-50" role="search" method="GET" action="<?= $BASE ?>/index.php">
+  <div class="input-group ff-search w-100" 
+       style="background:#2a2a2a; border-radius:2rem; overflow:hidden; border:1px solid #444;">
+    <span class="input-group-text" 
+          style="background:transparent; border:none; color:#bbb; padding-left:1rem;">
+      🔎
+    </span>
+    <input
+      id="qHeader"
+      type="search"
+      name="q"
+      class="form-control"
+      placeholder="Buscar en 4everFootball…"
+      value="<?= htmlspecialchars($_GET['q'] ?? '') ?>"
+      style="background:transparent; border:none; color:white; box-shadow:none;"
+    >
+  </div>
+</form>
+
     <nav class="d-flex align-items-center gap-2">
-      <button id="publishBtn" class="btn btn-register" type="button">Publicar</button>
-      <div class="ff-profile position-relative">
-        <button id="profileBtn" class="ff-avatar-btn" type="button">
-          <img src="<?= $BASE ?>/img/icon_iniciarsesion.png?v=1"
-               alt="Perfil" class="ff-avatar-img" width="36" height="36">
-        </button>
-      </div>
+      
     </nav>
   </div>
 </header>

@@ -33,13 +33,26 @@ $isAdmin = $isLogged && ($user['rol'] ?? '') === 'ADMIN';
       <a href="<?= $BASE ?>/index.php" class="d-flex align-items-center gap-2 text-decoration-none">
         <img src="<?= $BASE ?>/img/logo.svg" alt="4everFootball" style="height:34px" />
       </a>
+<form id="headerSearch" class="ms-auto me-auto w-50" role="search" method="GET" action="<?= $BASE ?>/index.php">
+  <div class="input-group ff-search w-100" 
+       style="background:#2a2a2a; border-radius:2rem; overflow:hidden; border:1px solid #444;">
+    <span class="input-group-text" 
+          style="background:transparent; border:none; color:#bbb; padding-left:1rem;">
+      🔎
+    </span>
+    <input
+      id="qHeader"
+      type="search"
+      name="q"
+      class="form-control"
+      placeholder="Buscar en 4everFootball…"
+      value="<?= htmlspecialchars($_GET['q'] ?? '') ?>"
+      style="background:transparent; border:none; color:white; box-shadow:none;"
+    >
+  </div>
+</form>
 
-      <form id="headerSearch" class="ms-auto me-auto w-50 d-flex" role="search" novalidate>
-        <div class="input-group ff-search w-100">
-          <span class="input-group-text">🔎</span>
-          <input id="qHeader" type="search" class="form-control" placeholder="Buscar en 4everFootball…" />
-        </div>
-      </form>
+
 
       <nav class="d-flex align-items-center gap-2">
        <!-- <button id="publishBtn" class="btn btn-register" type="button">Publicar</button>-->
@@ -179,6 +192,7 @@ $isAdmin = $isLogged && ($user['rol'] ?? '') === 'ADMIN';
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-primary" id="saveCategoryBtn">Guardar</button>
+
           </div>
         </div>
       </div>
@@ -189,6 +203,9 @@ $isAdmin = $isLogged && ($user['rol'] ?? '') === 'ADMIN';
   
   <script>
 const BASE = '<?= $BASE ?>';
+// Detectar si hay búsqueda (?q=algo)
+const urlParams = new URLSearchParams(window.location.search);
+const query = urlParams.get('q');
 
 /* ======================================================
    ELEMENTOS GLOBALES
@@ -261,6 +278,36 @@ document.addEventListener('click', (e)=>{
   }
 });
 
+document.getElementById('filterForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const categoria = document.getElementById('cat').value;
+  const orden = document.getElementById('orden').value;
+
+  offset = 0;
+  el.cards.innerHTML = "";
+
+  cargarFeed(categoria, orden, query || ""); // 👈 antes se perdía query
+});
+
+// Manejar clicks en el menú lateral
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.ff-leftnav-link');
+  if (!link) return;
+
+  e.preventDefault();
+
+  const categoria = link.dataset.cat || "";
+  const orden = link.dataset.sort || "reciente";
+  const busqueda = link.dataset.q || "";
+
+  offset = 0;
+  el.cards.innerHTML = "";
+
+  cargarFeed(categoria, orden, busqueda);
+});
+
+
 // Abrir/cerrar dropdown
 el.profileBtn?.addEventListener('click', () => {
   const open = el.profileMenu.classList.toggle('show');
@@ -280,20 +327,29 @@ let cargando = false;
 let usuarioSigue = null;
 
 // Cargar primeras publicaciones
-cargarFeed();
+// Si hay búsqueda, ejecutamos búsqueda
+if (query) {
+  offset = 0;
+  el.cards.innerHTML = "";
+  cargarFeed("", "reciente", query);
+} else {
+  cargarFeed();
+}
 
-async function cargarFeed(){
+
+async function cargarFeed(categoria = "", orden = "reciente", q = "") {
   if (cargando) return;
   cargando = true;
 
-  el.msg.textContent = "Cargando publicaciones...";
+  el.msg.textContent = q ? `Buscando "${q}"...` : "Cargando publicaciones...";
 
   try {
-    const res = await fetch(`${BASE}/api/publicaciones_listar_seguidos.php?offset=${offset}`);
-
+    const res = await fetch(
+      `${BASE}/api/publicaciones_listar_seguidos.php?offset=${offset}&cat=${categoria}&orden=${orden}&q=${encodeURIComponent(q)}`
+    );
     const json = await res.json();
 
-    if (json.seguido === false){
+    if (json.seguido === false) {
       el.cards.innerHTML = `
         <div class="glass-card p-4 text-center">
           <h5 class="mb-2">Aún no sigues ninguna sede o comunidad</h5>
@@ -304,19 +360,17 @@ async function cargarFeed(){
       return;
     }
 
-    usuarioSigue = true;
-
     renderFeed(json.publicaciones);
-
     offset += 10;
     cargando = false;
     el.msg.textContent = "";
 
-  } catch (e){
+  } catch (e) {
     el.msg.textContent = "Error de conexión con el servidor.";
     console.error(e);
   }
 }
+
 
 function renderFeed(list){
   if (!list?.length){
@@ -380,19 +434,23 @@ function renderCard(p){
   `;
 }
 
-
-
-
 /* ======================================================
    SCROLL INFINITO
 ====================================================== */
 window.addEventListener('scroll', () => {
-  if (!usuarioSigue) return;
+  if (query) return; // si hay búsqueda, no hacer infinite scroll
 
   const cercaDelFinal = window.innerHeight + window.scrollY >= document.body.offsetHeight - 600;
 
-  if (cercaDelFinal) cargarFeed();
+  if (cercaDelFinal) cargarFeed(
+    document.getElementById('cat')?.value || "",
+    document.getElementById('orden')?.value || "",
+    ""
+  );
 });
+
+
+
 
 /* ======================================================
    GRUPOS (lado derecho)
@@ -512,8 +570,54 @@ document.addEventListener('click', async (e) => {
     cargarFeed();
   }
 });
+
+document.getElementById('saveCategoryBtn').addEventListener('click', async () => {
+  const nombre = document.getElementById('categoryName').value.trim();
+  const slug = document.getElementById('categorySlug').value.trim();
+  const msg = document.getElementById('createCategoryMsg');
+
+  if (!nombre || !slug) {
+    msg.textContent = "Completa ambos campos.";
+    return;
+  }
+
+  try {
+    fetch(`${BASE}/api/create_category.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, slug })
+    });
+
+    const json = await res.json();
+    if (!json.ok) {
+      msg.textContent = json.error || "Error al guardar";
+      return;
+    }
+
+    // 🟢 Agregar directamente al <select>
+    addCategoryToSelect(json.nombre, json.slug);
+
+    // 🧼 Limpiar y cerrar
+    document.getElementById('formCreateCategory').reset();
+    msg.textContent = "";
+    const modal = bootstrap.Modal.getInstance(document.getElementById('createCategoryModal'));
+    modal.hide();
+
+  } catch (e) {
+    msg.textContent = "Error de conexión.";
+  }
+});
+
+function addCategoryToSelect(nombre, slug) {
+  const catSelect = document.getElementById('cat');
+  if (!catSelect) return;
+
+  const option = document.createElement('option');
+  option.value = slug;
+  option.textContent = nombre;
+  catSelect.appendChild(option);
+}
+
 </script>
-
-
 </body>
 </html>

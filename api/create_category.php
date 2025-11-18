@@ -3,7 +3,7 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once(__DIR__ . '/../conexion.php');
 
-// ✅ Validar sesión con compatibilidad extendida para admins
+// Validar que esté logueado y sea admin
 if (empty($_SESSION['user'])) {
     echo json_encode(['ok' => false, 'error' => 'No autorizado - sin sesión']);
     exit;
@@ -18,27 +18,27 @@ if (!$esAdmin) {
     exit;
 }
 
-// ✅ Procesar datos
+// Procesar datos del POST
 $data = json_decode(file_get_contents('php://input'), true);
 $nombre = trim($data['nombre'] ?? '');
-$slug = trim($data['slug'] ?? '');
+$slug = trim($data['slug'] ?? ''); // sigue siendo el slug, pero lo guardamos en descripcion
 
 if (!$nombre || !$slug) {
     echo json_encode(['ok' => false, 'error' => 'Campos incompletos']);
     exit;
 }
 
-// ✅ Insertar categoría
-$stmt = $conexion->prepare("INSERT INTO categorias (nombre, slug) VALUES (?, ?)");
-if (!$stmt) {
-    echo json_encode(['ok' => false, 'error' => 'Error al preparar consulta: ' . $conexion->error]);
-    exit;
-}
-
+// Insertar en la tabla real (categoria) y columna real (descripcion)
+$stmt = $conexion->prepare("INSERT INTO categoria (nombre, descripcion) VALUES (?, ?)");
 $stmt->bind_param("ss", $nombre, $slug);
 
 if ($stmt->execute()) {
-    echo json_encode(['ok' => true]);
+    echo json_encode([
+        'ok' => true,
+        'id' => $stmt->insert_id,
+        'nombre' => $nombre,
+        'slug' => $slug
+    ]);
 } else {
     echo json_encode(['ok' => false, 'error' => $stmt->error]);
 }

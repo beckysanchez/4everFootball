@@ -57,12 +57,25 @@ $publicaciones = $pubStmt->get_result()->fetch_all(MYSQLI_ASSOC);
     <a href="<?= $BASE ?>/index.php" class="d-flex align-items-center gap-2 text-decoration-none">
       <img src="<?= $BASE ?>/img/logo.svg?v=<?= time() ?>" alt="4everFootball" style="height:34px">
     </a>
-    <form id="headerSearch" class="ms-auto me-auto w-50 d-flex" role="search">
-      <div class="input-group ff-search w-100">
-        <span class="input-group-text">🔎</span>
-        <input id="qHeader" type="search" class="form-control" placeholder="Buscar en 4everFootball…">
-      </div>
-    </form>
+   <form id="headerSearch" class="ms-auto me-auto w-50" role="search" method="GET" action="<?= $BASE ?>/index.php">
+  <div class="input-group ff-search w-100" 
+       style="background:#2a2a2a; border-radius:2rem; overflow:hidden; border:1px solid #444;">
+    <span class="input-group-text" 
+          style="background:transparent; border:none; color:#bbb; padding-left:1rem;">
+      🔎
+    </span>
+    <input
+      id="qHeader"
+      type="search"
+      name="q"
+      class="form-control"
+      placeholder="Buscar en 4everFootball…"
+      value="<?= htmlspecialchars($_GET['q'] ?? '') ?>"
+      style="background:transparent; border:none; color:white; box-shadow:none;"
+    >
+  </div>
+</form>
+
     <nav class="d-flex align-items-center gap-2">
       <?php if (isset($_SESSION['user'])): ?>
         <a class="btn btn-register" href="<?= $BASE ?>/crear-publicacion.php?mundial_id=<?= $mundial_id ?>">Publicar</a>
@@ -229,6 +242,7 @@ document.querySelectorAll('.like-btn').forEach(btn => {
     }
   });
 });
+
 </script>
 
 

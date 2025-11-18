@@ -17,12 +17,25 @@
         <img src="img/logo.svg" alt="4everFootball" style="height:34px">
       </a>
 
-      <form id="headerSearch" class="ms-auto me-auto w-50 d-none d-md-flex" role="search" novalidate>
-        <div class="input-group ff-search">
-          <span class="input-group-text">🔎</span>
-          <input id="qHeader" type="search" class="form-control" placeholder="Buscar en 4everFootball…">
-        </div>
-      </form>
+  <form id="headerSearch" class="ms-auto me-auto w-50" role="search" method="GET" action="<?= $BASE ?>/index.php">
+  <div class="input-group ff-search w-100" 
+       style="background:#2a2a2a; border-radius:2rem; overflow:hidden; border:1px solid #444;">
+    <span class="input-group-text" 
+          style="background:transparent; border:none; color:#bbb; padding-left:1rem;">
+      🔎
+    </span>
+    <input
+      id="qHeader"
+      type="search"
+      name="q"
+      class="form-control"
+      placeholder="Buscar en 4everFootball…"
+      value="<?= htmlspecialchars($_GET['q'] ?? '') ?>"
+      style="background:transparent; border:none; color:white; box-shadow:none;"
+    >
+  </div>
+</form>
+
 
      
     </div>
