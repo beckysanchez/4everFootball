@@ -147,7 +147,7 @@ SELECT * FROM usuarios;
 SELECT * FROM mundial;
 SELECT * FROM pais;
 
-
+use mundial_reddit
 
 SELECT u.usuario_id, u.email, r.nombre AS rol
 FROM usuarios u

@@ -1,6 +1,3 @@
-
-
-
 DROP PROCEDURE IF EXISTS sp_crear_usuario;
 DELIMITER //
 
@@ -20,13 +17,11 @@ BEGIN
     DECLARE v_usuario_id INT;
     DECLARE v_rol_id INT;
 
-    -- Validar duplicado
     IF EXISTS (SELECT 1 FROM usuarios WHERE email = p_email) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El correo electrónico ya está registrado.';
     END IF;
 
-    -- País nacimiento
     SELECT pais_id INTO v_pais_nacimiento_id
     FROM pais WHERE nombre = p_pais_nacimiento
     LIMIT 1;
@@ -35,7 +30,6 @@ BEGIN
         SET v_pais_nacimiento_id = LAST_INSERT_ID();
     END IF;
 
-    -- Nacionalidad
     SELECT pais_id INTO v_nacionalidad_id
     FROM pais WHERE nombre = p_nacionalidad
     LIMIT 1;
@@ -44,7 +38,6 @@ BEGIN
         SET v_nacionalidad_id = LAST_INSERT_ID();
     END IF;
 
-    -- Insert usuario
     IF p_foto IS NOT NULL THEN
         INSERT INTO usuarios (
             nombre_completo, fecha_nacimiento, genero,
@@ -67,18 +60,15 @@ BEGIN
 
     SET v_usuario_id = LAST_INSERT_ID();
 
-    -- Rol por defecto
     SELECT rol_id INTO v_rol_id FROM roles WHERE nombre = 'USUARIO' LIMIT 1;
     IF v_rol_id IS NULL THEN
         INSERT INTO roles (nombre) VALUES ('USUARIO');
         SET v_rol_id = LAST_INSERT_ID();
     END IF;
 
-    -- Asignar rol
     INSERT INTO usuario_rol (usuario_id, rol_id)
     VALUES (v_usuario_id, v_rol_id);
 
-    -- Resultado final
     SELECT 'Usuario creado exitosamente' AS mensaje,
            v_usuario_id AS nuevo_usuario_id;
 END //
