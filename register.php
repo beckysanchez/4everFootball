@@ -149,7 +149,7 @@
                   <div class="input-group">
                     <input class="form-control" type="password" id="password" name="password"
                            required minlength="8"
-                           pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':&quot;\\|,.<>\/?]).{8,}">
+                           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$">
                     <button type="button" class="btn btn-outline-light eye-btn px-3" id="togglePwd"
                             aria-label="Mostrar contraseña" aria-pressed="false">
                       <!-- eye -->

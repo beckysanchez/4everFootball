@@ -33,15 +33,18 @@ SELECT
     p.media_url,
     p.estatus,
     p.creada_en,
+    p.views, 
     u.nombre_completo AS autor,
     c.nombre AS categoria,
-    m.nombre_oficial AS mundial,
+    m.nombre_comunidad AS mundial,
     s.apodo AS seleccion
+
 FROM publicacion p
-LEFT JOIN usuarios u ON p.usuario_id = u.usuario_id
-LEFT JOIN categoria c ON p.categoria_id = c.categoria_id
-LEFT JOIN mundial m ON p.mundial_id = m.mundial_id
-LEFT JOIN seleccion s ON p.seleccion_id = s.seleccion_id;
+LEFT JOIN usuarios u   ON p.usuario_id = u.usuario_id
+LEFT JOIN categoria c  ON p.categoria_id = c.categoria_id
+LEFT JOIN mundial m    ON p.mundial_id = m.mundial_id
+LEFT JOIN seleccion s  ON p.seleccion_id = s.seleccion_id;
+
 
 -- la siguiente vista se supone que es para los comentarios
 CREATE OR REPLACE VIEW vista_comentarios_detalle AS

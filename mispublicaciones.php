@@ -21,6 +21,7 @@ $stmt = $conexion->prepare("
     p.media_url,
     p.estatus,
     p.creada_en,
+    p.views,
     c.nombre AS categoria,
     m.nombre_comunidad AS sede_nombre
   FROM publicacion p
@@ -29,12 +30,23 @@ $stmt = $conexion->prepare("
   WHERE p.usuario_id = ?
   ORDER BY p.creada_en DESC
 ");
+
 $stmt->bind_param('i', $usuario_id);
 $stmt->execute();
 $res = $stmt->get_result();
 $publicaciones = $res->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
+
+// Obtener total de publicaciones usando tu FUNCTION
+$stmt = $conexion->prepare("SELECT fn_total_publicaciones_usuario(?) AS total_publicaciones");
+$stmt->bind_param('i', $usuario_id);
+$stmt->execute();
+$resTotal = $stmt->get_result();
+$rowTotal = $resTotal->fetch_assoc();
+$total_publicaciones = (int)$rowTotal['total_publicaciones'];
+$stmt->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -58,8 +70,7 @@ $stmt->close();
       </div>
     </form>
     <nav class="d-flex align-items-center gap-2">
-      <a class="btn btn-register" href="<?= $BASE ?>/crear-publicacion.php">Publicar</a>
-      <div class="ff-profile position-relative">
+          <div class="ff-profile position-relative">
         <button id="profileBtn" class="ff-avatar-btn" type="button">
           <img src="<?= $BASE ?>/img/icon_iniciarsesion.png?v=1" alt="Perfil" class="ff-avatar-img" width="36" height="36">
         </button>
@@ -69,7 +80,14 @@ $stmt->close();
 </header>
 
 <main class="container py-4">
-  <h2 class="text-white mb-4">Mis publicaciones</h2>
+
+  <div class="d-flex align-items-center mb-4">
+    <h2 class="text-white fw-bold mb-0">Mis publicaciones</h2>
+    <span class="ms-3 px-3 py-1 rounded-pill" 
+          style="background:#22c55e; color:#fff; font-weight:600;">
+        <?= $total_publicaciones ?>
+    </span>
+  </div>
 
   <?php if (empty($publicaciones)): ?>
     <div class="glass-card p-4 text-center text-secondary">
@@ -86,8 +104,14 @@ $stmt->close();
           $estado = strtoupper($p['estatus']);
           $media = htmlspecialchars($p['media_url']);
           $tipo = $p['tipo_media'];
-          $likes = rand(50, 900); // 👍 valor temporal simulado
+          $views = (int)$p['views'];
           $id = (int)$p['publicacion_id'];
+          $stLikes = $conexion->prepare("SELECT fn_total_reacciones_publicacion(?) AS likes");
+          $stLikes->bind_param('i', $id);
+          $stLikes->execute();
+          $rLikes = $stLikes->get_result()->fetch_assoc();
+          $likes = (int)$rLikes['likes'];
+          $stLikes->close();
 
           $chipColor = match($estado) {
             'APROBADA' => 'success',
@@ -116,6 +140,7 @@ $stmt->close();
               <span class="ff-chip text-uppercase" style="font-size:0.75rem;"><?= $categoria ?></span>
               <div class="d-flex gap-1 mt-2">
                 <button class="btn btn-outline-light btn-sm">👍 <?= $likes ?></button>
+                <button class="btn btn-outline-light btn-sm">👁️ <?= $views ?></button>
                 <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $id ?>" class="btn btn-login btn-sm">Comentar</a>
               </div>
             </div>

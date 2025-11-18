@@ -106,7 +106,21 @@ $publicaciones = $pubStmt->get_result()->fetch_all(MYSQLI_ASSOC);
       </div>
     <?php else: ?>
       <?php foreach ($publicaciones as $p): ?>
-        <article class="glass-card p-3 p-md-4 my-3 position-relative">
+
+    <?php
+      $id = (int)$p['publicacion_id'];
+
+      // Obtener likes reales desde la FUNCTION
+      $stLikes = $conexion->prepare("SELECT fn_total_reacciones_publicacion(?) AS likes");
+      $stLikes->bind_param('i', $id);
+      $stLikes->execute();
+      $rLikes = $stLikes->get_result()->fetch_assoc();
+      $likes = (int)$rLikes['likes'];
+      $stLikes->close();
+    ?>
+
+    <article class="glass-card p-3 p-md-4 my-3 position-relative">
+
 
           <!-- Cabecera -->
           <div class="d-flex justify-content-between align-items-start mb-2">
@@ -146,9 +160,10 @@ $publicaciones = $pubStmt->get_result()->fetch_all(MYSQLI_ASSOC);
           <!-- Acciones -->
           <div class="d-flex justify-content-between align-items-center mt-3">
             <div class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-light">
-                👍 <?= rand(50, 999) // temporal, luego se conecta a tabla reaccion ?>
+              <button class="btn btn-sm btn-outline-light like-btn" data-id="<?= $p['publicacion_id'] ?>">
+                👍 <span><?= $likes ?></span>
               </button>
+
               <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $p['publicacion_id'] ?>" class="btn btn-sm btn-login">💬 Comentar</a>
 
             </div>
@@ -189,7 +204,33 @@ async function cambiarEstado(id, estado) {
     alert('Error de conexión');
   }
 }
+
+/* 👉 ESTE ES EL CÓDIGO NUEVO PARA DAR LIKE */
+document.querySelectorAll('.like-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+
+    const fd = new FormData();
+   fd.append('publicacion_id', id);
+   fd.append('usuario_id', <?= $_SESSION['user']['id'] ?? '0' ?>);
+
+    const res = await fetch('<?= $BASE ?>/api/publicacion_like.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'include'
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      let num = parseInt(btn.querySelector('span').innerText);
+      btn.querySelector('span').innerText = data.accion === 'like' ? num + 1 : num - 1;
+    } else {
+      alert(data.error || 'Error al dar like');
+    }
+  });
+});
 </script>
+
 
 </body>
 </html>

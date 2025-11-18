@@ -15,6 +15,9 @@ BEGIN
 END //
 DELIMITER ;
 
+DROP FUNCTION fn_edad_usuario;
+
+
 DELIMITER //
 CREATE FUNCTION fn_total_reacciones_publicacion(p_publicacion_id INT)
 RETURNS INT

@@ -52,7 +52,13 @@ $media       = htmlspecialchars($pub['media_url']);
 $tipo_media  = $pub['tipo_media'];
 $sede_nombre = htmlspecialchars($pub['sede_nombre']);
 $sede_slug   = strtolower(str_replace(' ', '-', $sede_nombre));
-$likesFake   = rand(50, 900);
+$stmtLikes = $conexion->prepare("SELECT fn_total_reacciones_publicacion(?) AS total_likes");
+$stmtLikes->bind_param("i", $id);
+$stmtLikes->execute();
+$likesRow = $stmtLikes->get_result()->fetch_assoc();
+$likes = (int)$likesRow['total_likes'];
+$stmtLikes->close();
+
 $sede_slug   = htmlspecialchars($pub['sede_slug']);
 $sede_logo   = htmlspecialchars($pub['sede_logo']);
 $sede_portada = htmlspecialchars($pub['sede_portada']);
@@ -131,8 +137,8 @@ $sede_desc    = htmlspecialchars($pub['sede_descripcion']);
     </div>
 
     <div class="ff-actions mt-3">
-      <button id="likeBtn" class="btn btn-outline-light">👍 <span id="likeCount"><?= $likesFake ?></span></button>
-      <a class="btn btn-login" href="#comments">Comentar</a>
+      <button id="likeBtn" class="btn btn-outline-light">👍 <span id="likeCount"><?= $likes ?></span></button>
+     <a class="btn btn-login" href="#comments">Comentar</a>
     </div>
   </article>
 
