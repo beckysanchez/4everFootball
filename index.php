@@ -422,12 +422,9 @@ function renderCard(p){
 
       <!-- ACCIONES -->
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-light">
-          👍 Like
-        </button>
-        <a href="${BASE}/detalle-publicacion.php?id=${p.publicacion_id}" 
+              <a href="${BASE}/detalle-publicacion.php?id=${p.publicacion_id}" 
            class="btn btn-sm btn-login">
-           💬 Comentar
+           detalle
         </a>
       </div>
     </article>
@@ -562,13 +559,13 @@ document.addEventListener('click', async (e) => {
   });
   const json = await res.json();
 
-  if (json.ok) {
-    btn.classList.add('siguiendo');
-    btn.textContent = 'Siguiendo';
-    offset = 0;
-    el.cards.innerHTML = "";
-    cargarFeed();
-  }
+if (json.ok) {
+  btn.classList.add('siguiendo');
+  btn.textContent = 'Siguiendo';
+  // Recarga completa como si presionaras F5
+  location.reload(); 
+}
+
 });
 
 document.getElementById('saveCategoryBtn').addEventListener('click', async () => {

@@ -9,7 +9,8 @@
   $CSRF = $_SESSION['csrf'];
 
   // ?next=/ruta-a-volver (opcional)
-  $next = isset($_GET['next']) && is_string($_GET['next']) ? $_GET['next'] : "$BASE/index.php";
+// Por defecto, redirigir a login.php después del registro exitoso
+$next = isset($_GET['next']) && is_string($_GET['next']) ? $_GET['next'] : "$BASE/login.php";
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -298,7 +299,7 @@ function validarCampoTexto(el) {
           if (data.user) try{ localStorage.setItem('ff_user', JSON.stringify(data.user)); }catch{}
           const next = (data.next && typeof data.next === 'string')
                      ? data.next
-                     : (form.querySelector('input[name="next"]')?.value || '<?= $BASE ?>/index.php');
+                     : (form.querySelector('input[name="next"]')?.value || '<?= $BASE ?>/login.php');
           location.href = next;
         } else {
           showMsg((data && (data.msg || data.error)) || 'No se pudo crear la cuenta.');

@@ -37,7 +37,6 @@ $res = $stmt->get_result();
 $publicaciones = $res->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-// Obtener total de publicaciones usando tu FUNCTION
 $stmt = $conexion->prepare("SELECT fn_total_publicaciones_usuario(?) AS total_publicaciones");
 $stmt->bind_param('i', $usuario_id);
 $stmt->execute();
@@ -81,15 +80,6 @@ $stmt->close();
     >
   </div>
 </form>
-
-
-    <nav class="d-flex align-items-center gap-2">
-          <div class="ff-profile position-relative">
-        <button id="profileBtn" class="ff-avatar-btn" type="button">
-          <img src="<?= $BASE ?>/img/icon_iniciarsesion.png?v=1" alt="Perfil" class="ff-avatar-img" width="36" height="36">
-        </button>
-      </div>
-    </nav>
   </div>
 </header>
 
@@ -153,7 +143,7 @@ $stmt->close();
               </div>
               <span class="ff-chip text-uppercase" style="font-size:0.75rem;"><?= $categoria ?></span>
               <div class="d-flex gap-1 mt-2">
-                <button class="btn btn-outline-light btn-sm">👍 <?= $likes ?></button>
+    <button class="btn btn-sm btn-outline-light">👍 <?= $likes ?></button>
                 <button class="btn btn-outline-light btn-sm">👁️ <?= $views ?></button>
                 <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $id ?>" class="btn btn-login btn-sm">Comentar</a>
               </div>
@@ -166,5 +156,7 @@ $stmt->close();
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
 </body>
 </html>

@@ -375,6 +375,42 @@ list.addEventListener('click', async e => {
 
 // 🧩 --- 7. CARGA INICIAL ---
 cargarComentarios();
+
+const likeBtn = document.getElementById('likeBtn');
+const likeCount = document.getElementById('likeCount');
+
+likeBtn?.addEventListener('click', async () => {
+  if (!user) return alert('Debes iniciar sesión para dar like.');
+
+  const fd = new FormData();
+  fd.append('publicacion_id', publicacion_id);
+  fd.append('usuario_id', user.id);
+
+  try {
+    const res = await fetch(`${BASE}/api/publicacion_like.php`, {
+      method: "POST",
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      let count = parseInt(likeCount.textContent);
+
+      if (data.accion === 'like') {
+        likeCount.textContent = count + 1;
+        likeBtn.classList.remove('btn-outline-light');
+        likeBtn.classList.add('btn-login');
+      } else {
+        likeCount.textContent = count - 1;
+        likeBtn.classList.add('btn-outline-light');
+        likeBtn.classList.remove('btn-login');
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error de conexión');
+  }
+});
 </script>
 
 
