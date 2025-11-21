@@ -100,26 +100,52 @@ $next = isset($_GET['next']) && is_string($_GET['next']) ? $_GET['next'] : "$BAS
                 </div>
               </div>
               <!-- País de nacimiento -->
-              <div class="reg-row-single">
-                <div>
-                  <label class="form-label" for="country">País de nacimiento</label>
-                  <input class="form-control" list="country-list" id="country" name="country" required placeholder="Ej. México">
-                  <datalist id="country-list">
-                    <option value="México"></option><option value="Argentina"></option><option value="España"></option>
-                    <option value="Estados Unidos"></option><option value="Colombia"></option><option value="Chile"></option>
-                    <option value="Perú"></option><option value="Brasil"></option><option value="Uruguay"></option>
-                  </datalist>
-                  <div class="invalid-feedback">Indica tu país.</div>
-                </div>
-              </div>
-              <!-- Nacionalidad -->
-              <div class="reg-row-single">
-                <div>
-                  <label class="form-label" for="nationality">Nacionalidad</label>
-                  <input class="form-control" id="nationality" name="nationality" required placeholder="Ej. Mexicana">
-                  <div class="invalid-feedback">Indica tu nacionalidad.</div>
-                </div>
-              </div>
+             <!-- País de nacimiento -->
+<div class="reg-row-single">
+  <div>
+    <label class="form-label" for="country">País de nacimiento</label>
+    <input class="form-control" list="country-list" id="country" name="country" 
+           required placeholder="Ej. México">
+    <datalist id="country-list">
+      <option value="México">
+      <option value="Argentina">
+      <option value="España">
+      <option value="Estados Unidos">
+      <option value="Colombia">
+      <option value="Chile">
+      <option value="Perú">
+      <option value="Brasil">
+      <option value="Uruguay">
+      <option value="Costa Rica">
+      <option value="Francia">
+    </datalist>
+    <div class="invalid-feedback">Indica tu país.</div>
+  </div>
+</div>
+
+<!-- Nacionalidad -->
+<div class="reg-row-single">
+  <div>
+    <label class="form-label" for="nationality">Nacionalidad</label>
+    <input class="form-control" list="nation-list" id="nationality" name="nationality" 
+           required placeholder="Ej. Mexicana">
+    <datalist id="nation-list">
+      <option value="Mexicana">
+      <option value="Argentina">
+      <option value="Española">
+      <option value="Estadounidense">
+      <option value="Colombiana">
+      <option value="Chilena">
+      <option value="Peruana">
+      <option value="Brasileña">
+      <option value="Uruguaya">
+      <option value="Costarricense">
+      <option value="Francesa">
+    </datalist>
+    <div class="invalid-feedback">Indica tu nacionalidad.</div>
+  </div>
+</div>
+
             </section>
 
 

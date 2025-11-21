@@ -111,7 +111,16 @@ $isAdmin = $isLogged && ($user['rol'] ?? '') === 'ADMIN';
             <li><a class="ff-leftnav-link" href="#" data-q="gol">Goles icónicos</a></li>
           </ul>
         </nav>
+
+        <!-- 🔹 CARD DE INFO DEPORTIVA ALEATORIA -->
+<div id="sportsCard" class="glass-card p-3 my-3 text-white">
+  <p class="text-secondary mb-1">Cargando datos deportivos...</p>
+</div>
       </aside>
+
+
+
+
 
       <!-- Columna CENTRAL (Feed) -->
       <section class="ff-feed">
@@ -513,9 +522,8 @@ async function marcarSiSigue(id){
 async function logout(){
   await fetch(`${BASE}/api/logout.php`, { method: 'POST' });
   localStorage.removeItem('ff_user');
-  location.href = `${BASE}/index.php`;
+  location.href = `${BASE}/login.php`;  
 }
-
 /* ======================================================
    INICIALIZACIÓN
 ====================================================== */
@@ -626,8 +634,46 @@ function addCategoryToSelect(nombre, slug) {
   option.textContent = nombre;
   catSelect.appendChild(option);
 }
-
-
 </script>
+
+<script>
+// 🔄 Obtener un evento deportivo random desde TheSportsDB
+async function loadSportsCard() {
+  try {
+    // Evento random (puedes cambiar a alguna liga específica si quieres)
+ const res = await fetch(
+  "https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4572" 
+);
+
+    const data = await res.json();
+
+
+    if (!data.events) {
+      document.getElementById('sportsCard').innerHTML =
+        "<p class='text-secondary'>No se pudo obtener datos deportivos.</p>";
+      return;
+    }
+
+    // Seleccionamos un evento random de los últimos partidos
+    const randomEvent = data.events[Math.floor(Math.random() * data.events.length)];
+
+    // Pintamos la card con el mismo estilo de tu sitio
+    document.getElementById('sportsCard').innerHTML = `
+      <h5 class="mb-2">⚽ Partido destacado</h5>
+      <strong>${randomEvent.strEvent}</strong><br>
+      <span class="text-secondary small">${randomEvent.dateEvent} · ${randomEvent.strLeague}</span>
+      <p class="mt-2">${randomEvent.strStatus ? randomEvent.strStatus : 'Finalizado'}</p>
+      <button class="btn btn-sm btn-login" onclick="loadSportsCard()">Otro dato</button>
+    `;
+  } catch (e) {
+    document.getElementById('sportsCard').innerHTML =
+      `<p class='text-danger'>Error al cargar datos deportivos.</p>`;
+  }
+}
+
+// Llamar al cargar la página
+loadSportsCard();
+</script>
+
 </body>
 </html>
