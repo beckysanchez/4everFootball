@@ -167,6 +167,6 @@ session_regenerate_id(true);
 
 json_ok([
     'msg'  => 'Cuenta creada correctamente.',
-    'next' => '/4everFootball/login.php',
+    'next' => '/4everFootball/index.php',
     'user' => $_SESSION['user']
 ]);

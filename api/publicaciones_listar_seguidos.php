@@ -48,8 +48,8 @@ $sql = "
         p.tipo_media,
         p.media_url,
         p.creada_en,
-      p.total_likes,
-p.total_comentarios,
+        p.total_likes,
+        p.total_comentarios,
         c.nombre AS categoria,
         m.nombre_comunidad AS sede_nombre,
         m.slug AS sede_slug,
@@ -58,7 +58,9 @@ p.total_comentarios,
     JOIN categoria c ON c.categoria_id = p.categoria_id
     JOIN mundial m ON m.mundial_id = p.mundial_id
     WHERE p.mundial_id IN ($in)
+    AND p.estatus = 'APROBADA'
 ";
+
 
 if (!empty($cat)) {
     $sql .= " AND c.nombre = ? ";
