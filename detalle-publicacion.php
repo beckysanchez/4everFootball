@@ -11,7 +11,40 @@ if ($id <= 0) {
 }
 
 // Incrementar contador de vistas
-$conexion->query("UPDATE publicacion SET views = views + 1 WHERE publicacion_id = $id");
+if (!empty($_SESSION['user'])) {
+    $usuario_id = $_SESSION['user']['id'];
+
+    // 1️⃣ Verificar si YA estaba registrada la vista
+    $stmt = $conexion->prepare("
+        SELECT 1 
+        FROM vista_publicacion 
+        WHERE publicacion_id = ? AND usuario_id = ?
+    ");
+    $stmt->bind_param('ii', $id, $usuario_id);
+    $stmt->execute();
+    $yaVio = $stmt->get_result()->fetch_row();
+    $stmt->close();
+
+    // 2️⃣ Si NO ha visto antes ➜ registramos en tabla y sumamos al contador
+    if (!$yaVio) {
+        // Registrar vista única
+        $stmt = $conexion->prepare("
+            INSERT INTO vista_publicacion (publicacion_id, usuario_id, visto_en) 
+            VALUES (?, ?, NOW())
+        ");
+        $stmt->bind_param('ii', $id, $usuario_id);
+        $stmt->execute();
+        $stmt->close();
+
+        // Sumar +1 al contador general
+        $conexion->query("
+            UPDATE publicacion 
+            SET views = views + 1 
+            WHERE publicacion_id = $id
+        ");
+    }
+}
+
 
 
 // --- Cargar publicación ---

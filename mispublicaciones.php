@@ -44,6 +44,43 @@ $resTotal = $stmt->get_result();
 $rowTotal = $resTotal->fetch_assoc();
 $total_publicaciones = (int)$rowTotal['total_publicaciones'];
 $stmt->close();
+
+// Total de vistas
+$stmt = $conexion->prepare("
+  SELECT SUM(views) AS total_views
+  FROM publicacion
+  WHERE usuario_id = ?
+");
+$stmt->bind_param('i', $usuario_id);
+$stmt->execute();
+$totalViews = (int)$stmt->get_result()->fetch_assoc()['total_views'];
+$stmt->close();
+
+// Total de likes (tabla reaccion)
+$stmt = $conexion->prepare("
+  SELECT COUNT(*) AS total_likes
+  FROM reaccion r
+  JOIN publicacion p ON p.publicacion_id = r.publicacion_id
+  WHERE p.usuario_id = ?
+");
+$stmt->bind_param('i', $usuario_id);
+$stmt->execute();
+$totalLikes = (int)$stmt->get_result()->fetch_assoc()['total_likes'];
+$stmt->close();
+
+// Total de comentarios (tabla comentario)
+$stmt = $conexion->prepare("
+  SELECT COUNT(*) AS total_comentarios
+  FROM comentario c
+  JOIN publicacion p ON p.publicacion_id = c.publicacion_id
+  WHERE p.usuario_id = ?
+");
+$stmt->bind_param('i', $usuario_id);
+$stmt->execute();
+$totalComentarios = (int)$stmt->get_result()->fetch_assoc()['total_comentarios'];
+$stmt->close();
+
+
 ?>
 
 <!DOCTYPE html>
@@ -92,6 +129,20 @@ $stmt->close();
         <?= $total_publicaciones ?>
     </span>
   </div>
+  <div class="d-flex gap-3 mb-4">
+  <span class="px-3 py-1 rounded-pill" style="background:#2563eb; color:white;">
+    👁️ <?= $totalViews ?>
+  </span>
+  
+  <span class="px-3 py-1 rounded-pill" style="background:#ec4899; color:white;">
+    👍 <?= $totalLikes ?>
+  </span>
+  
+  <span class="px-3 py-1 rounded-pill" style="background:#239223; color:white;">
+    💬 <?= $totalComentarios ?>
+  </span>
+</div>
+
 
   <?php if (empty($publicaciones)): ?>
     <div class="glass-card p-4 text-center text-secondary">
@@ -142,11 +193,18 @@ $stmt->close();
                 <?= $sede ?> · <?= $fecha ?>
               </div>
               <span class="ff-chip text-uppercase" style="font-size:0.75rem;"><?= $categoria ?></span>
-              <div class="d-flex gap-1 mt-2">
+             <div class="d-flex gap-1 mt-2">
+  <?php if ($estado === 'RECHAZADA'): ?>
+    <span class="text-danger small">⛔ Sin estadísticas</span>
+  <?php else: ?>
     <button class="btn btn-sm btn-outline-light">👍 <?= $likes ?></button>
-                <button class="btn btn-outline-light btn-sm">👁️ <?= $views ?></button>
-                <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $id ?>" class="btn btn-login btn-sm">Comentar</a>
-              </div>
+    <button class="btn btn-outline-light btn-sm">👁️ <?= $views ?></button>
+   <a href="<?= $BASE ?>/detalle-publicacion.php?id=<?= $id ?>" 
+   class="btn btn-login btn-sm text-center">Comentar</a>
+
+  <?php endif; ?>
+</div>
+
             </div>
           </div>
         </div>
